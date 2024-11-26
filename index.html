@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Football Manager</title>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>EA FC 25 Tactics & Formations</h1>
+            <p>Build Custom Tactics & Formations</p>
+        </div>
+    </header>
+    <div class="container">
+        <div class="terrain">
+            <img src="images/backgroundStadium.png" alt="Terrain">
+        </div>
+        <div class="form">
+            <form class="player-form">
+                <input type="text" placeholder="Nom du joueur" id="name">
+                <input type="url" placeholder="URL de la photo" id="photo">
+                <input type="text" placeholder="Nationalité" id="nationality">
+                <input type="url" placeholder="URL du drapeau" id="flag">
+                <input type="text" placeholder="Club" id="club">
+                <input type="url" placeholder="Logo du club" id="logo">
+                <input type="number" placeholder="Note globale" id="rating" min="0" max="99">
+                
+                <select id="position" onchange="toggleStats()">
+                    <option value="">Choisir une position</option>
+                    <option value="GK">Gardien (GK)</option>
+                    <option value="CB">Défenseur central (CB)</option>
+                    <option value="LB">Latéral gauche (LB)</option>
+                    <option value="RB">Latéral droit (RB)</option>
+                    <option value="CM">Milieu central (CM)</option>
+                    <option value="CDM">Milieu défensif (CDM)</option>
+                    <option value="LW">Ailier gauche (LW)</option>
+                    <option value="RW">Ailier droit (RW)</option>
+                    <option value="ST">Attaquant (ST)</option>
+                </select>
+
+                <div id="normalStats">
+                    <input type="number" placeholder="Pace" min="0" max="99">
+                    <input type="number" placeholder="Shooting" min="0" max="99">
+                    <input type="number" placeholder="Passing" min="0" max="99">
+                    <input type="number" placeholder="Dribbling" min="0" max="99">
+                    <input type="number" placeholder="Defending" min="0" max="99">
+                    <input type="number" placeholder="Physical" min="0" max="99">
+                </div>
+
+                <div id="gkStats" style="display: none;">
+                    <input type="number" placeholder="Diving" min="0" max="99">
+                    <input type="number" placeholder="Handling" min="0" max="99">
+                    <input type="number" placeholder="Kicking" min="0" max="99">
+                    <input type="number" placeholder="Reflexes" min="0" max="99">
+                    <input type="number" placeholder="Speed" min="0" max="99">
+                    <input type="number" placeholder="Positioning" min="0" max="99">
+                </div>
+
+                <button type="submit">Ajouter le joueur</button>
+            </form>
+        </div>
+    </div>
+    <div class="banc">
+        
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
