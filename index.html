@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -12,19 +13,56 @@
             <h1>EA FC 25 Tactics & Formations</h1>
             <p>Build Custom Tactics & Formations</p>
         </div>
+        <div class="formation-selector">
+            <select id="formation" onchange="changeFormation()">
+                <option value="442">4-4-2</option>
+                <option value="433">4-3-3</option>
+            </select>
+        </div>
     </header>
     <div class="container">
         <div class="terrain">
-            <img src="images/backgroundStadium.png" alt="Terrain">
+            <img src="images/backgroundStadium.png" alt="Terrain" class="img">
+            <div class="field"></div>
         </div>
         <div class="form">
             <form class="player-form">
                 <input type="text" placeholder="Nom du joueur" id="name">
                 <input type="url" placeholder="URL de la photo" id="photo">
-                <input type="text" placeholder="Nationalité" id="nationality">
-                <input type="url" placeholder="URL du drapeau" id="flag">
-                <input type="text" placeholder="Club" id="club">
-                <input type="url" placeholder="Logo du club" id="logo">
+                <select id="nationality" required>
+                    <option value="">Choisir une nationalité</option>
+                    <option value="Argentina">Argentina</option>
+                    <option value="Portugal">Portugal</option>
+                    <option value="Belgium">Belgium</option>
+                    <option value="France">France</option>
+                    <option value="Netherlands">Netherlands</option>
+                    <option value="Germany">Germany</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Egypt">Egypt</option>
+                    <option value="Slovenia">Slovenia</option>
+                    <option value="Croatia">Croatia</option>
+                    <option value="Morocco">Morocco</option>
+                    <option value="Norway">Norway</option>
+                    <option value="Canada">Canada</option>
+                    <option value="England">England</option>
+                    <option value="Italy">Italy</option>
+                </select>
+                <select id="club" required>
+                    <option value="">Choisir un club</option>
+                    <option value="Inter Miami">Inter Miami</option>
+                    <option value="Al Nassr">Al Nassr</option>
+                    <option value="Manchester City">Manchester City</option>
+                    <option value="Real Madrid">Real Madrid</option>
+                    <option value="Liverpool">Liverpool</option>
+                    <option value="Al-Hilal">Al-Hilal</option>
+                    <option value="Bayern Munich">Bayern Munich</option>
+                    <option value="Atletico Madrid">Atletico Madrid</option>
+                    <option value="Al-Ittihad">Al-Ittihad</option>
+                    <option value="Manchester United">Manchester United</option>
+                    <option value="Paris Saint-Germain">Paris Saint-Germain</option>
+                    <option value="Fenerbahçe">Fenerbahçe</option>
+                    <option value="PSV">PSV</option>
+                </select>
                 <input type="number" placeholder="Note globale" id="rating" min="0" max="99">
                 
                 <select id="position" onchange="toggleStats()">
@@ -34,13 +72,14 @@
                     <option value="LB">Latéral gauche (LB)</option>
                     <option value="RB">Latéral droit (RB)</option>
                     <option value="CM">Milieu central (CM)</option>
-                    <option value="CDM">Milieu défensif (CDM)</option>
+                    <option value="LM">Milieu gauche (LM)</option>
+                    <option value="RM">Milieu droit (RM)</option>
                     <option value="LW">Ailier gauche (LW)</option>
                     <option value="RW">Ailier droit (RW)</option>
                     <option value="ST">Attaquant (ST)</option>
                 </select>
 
-                <div id="normalStats">
+                <div id="normalStats" style="display: none;">
                     <input type="number" placeholder="Pace" min="0" max="99">
                     <input type="number" placeholder="Shooting" min="0" max="99">
                     <input type="number" placeholder="Passing" min="0" max="99">
@@ -62,9 +101,7 @@
             </form>
         </div>
     </div>
-    <div class="banc">
-        
-    </div>
+    <div class="banc"></div>
 
     <script src="js/script.js"></script>
 </body>
