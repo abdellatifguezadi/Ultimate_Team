@@ -1,4 +1,3 @@
-
 const flagUrls = {
     "Argentina": "https://cdn.sofifa.net/flags/ar.png",
     "Portugal": "https://cdn.sofifa.net/flags/pt.png",
@@ -36,38 +35,37 @@ const clubLogos = {
 const formations = {
     "442": {
         positions: [
-            { top: "80%", left: "50%", position: "GK" },
-            { top: "60%", left: "20%", position: "LB" },
-            { top: "60%", left: "40%", position: "CB" },
-            { top: "60%", left: "60%", position: "CB" },
-            { top: "60%", left: "80%", position: "RB" },
-            { top: "35%", left: "20%", position: "LM" },
-            { top: "35%", left: "40%", position: "CM" },
-            { top: "35%", left: "60%", position: "CM" },
-            { top: "35%", left: "80%", position: "RM" },
-            { top: "10%", left: "35%", position: "ST" },
-            { top: "10%", left: "64%", position: "ST" }
+            { top: "60%", left: "43%", position: "GK" },
+            { top: "45%", left: "75%", position: "LB" }, 
+            { top: "47%", left: "58%", position: "CB" },  
+            { top: "47%", left: "27%", position: "CB" },  
+            { top: "44%", left: "9%", position: "RB" }, 
+            { top: "20%", left: "75%", position: "LM" }, 
+            { top: "25%", left: "58%", position: "CM" }, 
+            { top: "25%", left: "27%", position: "CM" }, 
+            { top: "20%", left: "9%", position: "RM" }, 
+            { top: "3%", left: "53%", position: "ST" }, 
+            { top: "3%", left: "32%", position: "ST" }  
         ]
     },
     "433": {
         positions: [
-            { top: "80%", left: "50%", position: "GK" },
-            { top: "60%", left: "20%", position: "LB" },
-            { top: "60%", left: "40%", position: "CB" },
-            { top: "60%", left: "60%", position: "CB" },
-            { top: "60%", left: "80%", position: "RB" },
-            { top: "35%", left: "35%", position: "CM" },
-            { top: "35%", left: "50%", position: "CM" },
-            { top: "35%", left: "65%", position: "CM" },
-            { top: "15%", left: "20%", position: "LW" },
-            { top: "10%", left: "50%", position: "ST" },
-            { top: "15%", left: "80%", position: "RW" }
+            { top: "60%", left: "43%", position: "GK" },  
+            { top: "45%", left: "75%", position: "LB" },  
+            { top: "47%", left: "58%", position: "CB" },  
+            { top: "47%", left: "27%", position: "CB" },  
+            { top: "44%", left: "9%", position: "RB" },  
+            { top: "25%", left: "65%", position: "CM" },  
+            { top: "20%", left: "42%", position: "CM" },   
+            { top: "25%", left: "20%", position: "CM" },
+            { top: "10%", left: "70%", position: "LW" },
+            { top: "2%", left: "43%", position: "ST" },  
+            { top: "10%", left: "15%", position: "RW" }  
         ]
     }
 };
 
 let players = JSON.parse(localStorage.getItem('players')) || [];
-
 
 function updateField() {
     const formationSelect = document.getElementById('formation');
@@ -79,9 +77,7 @@ function updateField() {
     const selectedFormation = formations[formationSelect.value];
     const usedPlayers = new Set();
     
-   
     selectedFormation.positions.forEach(position => {
-
         const player = players.find(p => 
             p.position === position.position && 
             !usedPlayers.has(p)
@@ -89,65 +85,64 @@ function updateField() {
         
         if (player) {
             usedPlayers.add(player);
-            const card = createPlayerCard(player, position);
-            field.appendChild(card);
+            field.appendChild(createPlayerCard(player, position));
         } else {
-
-            const emptyCard = document.createElement('div');
-            emptyCard.className = 'player-card empty';
-            const positionMarker = document.createElement('div');
-            positionMarker.className = 'position-marker';
-            positionMarker.textContent = position.position;
-            emptyCard.appendChild(positionMarker);
-            emptyCard.style.top = position.top;
-            emptyCard.style.left = position.left;
-            field.appendChild(emptyCard);
+            field.appendChild(createEmptyCard(position));
         }
     });
-    const benchPlayers = players.filter(player => !usedPlayers.has(player));
+
+    const benchPlayers = players.filter(p => !usedPlayers.has(p));
     benchPlayers.forEach(player => {
-        const bancCard = createPlayerCard(player, { position: player.position });
-        banc.appendChild(bancCard);
+        banc.appendChild(createPlayerCard(player, { position: 'banc' }));
     });
+
+    const emptySlots = Math.max(0, 7 - benchPlayers.length);
+    for (let i = 0; i < emptySlots; i++) {
+        banc.appendChild(createEmptyBenchCard());
+    }
+
+    savePlayers();
 }
 
 function createPlayerCard(player, position) {
     const card = document.createElement('div');
-    card.className = 'player-card';
+    card.className = 'player-card fifa-card';
+    card.draggable = true;
+    
+    card.addEventListener('dragstart', handleDragStart);
+    card.addEventListener('dragover', handleDragOver);
+    card.addEventListener('drop', handleDrop);
+    
+    card.dataset.playerName = player.name;
+    card.dataset.position = position.position;
+    
     card.innerHTML = `
         <div class="card-inner">
-            <div class="card-front">
-                <img class="player-image" src="${player.photo}">
-                <div class="logo-container">
-                    <img class="flag-image" src="${player.flag}">
-                    <img class="club-logo" src="${player.logo}">
+
+            <div class="player-image-container">
+                <img class="player-image" src="${player.photo}" alt="${player.name}">
+                <div class="card-footer">
+                <img class="flag-image" src="${player.flag}">
+                <img class="club-logo" src="${player.logo}">
+            </div>
+            </div>
+            <div class="player-name">${player.name}</div>
+            <div class="player-stats">
+                <div class="stat-row">
+                    <span class="stat">PAC ${player.pace}</span>
+                    <span class="stat">DRI ${player.dribbling}</span>
+                    <span class="stat">SHO ${player.shooting}</span>
+                    <span class="stat">DEF ${player.defending}</span>
                 </div>
-                <div class="player-rating">${player.rating}</div>
-                <div class="position-marker">${position.position}</div>
-                <div class="player-name">${player.name}</div>
+                <div class="stat-row">
+                    
+                    <span class="stat">PAS ${player.passing}</span>
+                    <span class="stat">PHY ${player.physical}</span>
+                     <span class="rating">${player.rating}</span>
+                     <span class="position">${position.position}</span>
+                </div>  
             </div>
-            <div class="card-back">
-                <h3>${player.name}</h3>
-                ${player.position === 'GK' ? `
-                    <div class="stats">
-                        <div class="stat">DIV: ${player.diving}</div>
-                        <div class="stat">HAN: ${player.handling}</div>
-                        <div class="stat">KIC: ${player.kicking}</div>
-                        <div class="stat">REF: ${player.reflexes}</div>
-                        <div class="stat">SPE: ${player.speed}</div>
-                        <div class="stat">POS: ${player.positioning}</div>
-                    </div>
-                ` : `
-                    <div class="stats">
-                        <div class="stat">PAC: ${player.pace}</div>
-                        <div class="stat">SHO: ${player.shooting}</div>
-                        <div class="stat">PAS: ${player.passing}</div>
-                        <div class="stat">DRI: ${player.dribbling}</div>
-                        <div class="stat">DEF: ${player.defending}</div>
-                        <div class="stat">PHY: ${player.physical}</div>
-                    </div>
-                `}
-            </div>
+           
         </div>
     `;
 
@@ -158,56 +153,114 @@ function createPlayerCard(player, position) {
 
     return card;
 }
+
+function createEmptyCard(position) {
+    const emptyCard = document.createElement('div');
+    emptyCard.className = 'player-card empty-position';
+    emptyCard.style.top = position.top;
+    emptyCard.style.left = position.left;
+    
+    emptyCard.addEventListener('dragover', handleDragOver);
+    emptyCard.addEventListener('drop', handleDrop);
+    
+    const positionMarker = document.createElement('div');
+    positionMarker.className = 'position-marker';
+    positionMarker.textContent = position.position;
+    emptyCard.appendChild(positionMarker);
+    
+    return emptyCard;
+}
+
+function createEmptyBenchCard() {
+    const emptyCard = document.createElement('div');
+    emptyCard.className = 'player-card empty-position';
+    
+    const positionMarker = document.createElement('div');
+    positionMarker.className = 'position-marker';
+    positionMarker.textContent = 'BANC';
+    emptyCard.appendChild(positionMarker);
+    
+    emptyCard.addEventListener('dragover', handleDragOver);
+    emptyCard.addEventListener('drop', handleDrop);
+    
+    return emptyCard;
+}
+
+function handleDragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.playerName);
+    e.target.classList.add('dragging');
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    
+    const draggedPlayerName = e.dataTransfer.getData('text/plain');
+    const draggedCard = document.querySelector(`.player-card[data-player-name="${draggedPlayerName}"]`);
+    const targetCard = e.target.closest('.player-card, .empty-position');
+    
+    if (draggedCard && targetCard) {
+        const draggedPlayer = players.find(p => p.name === draggedPlayerName);
+
+        if (targetCard.classList.contains('empty-position') && targetCard.closest('.banc')) {
+            draggedPlayer.position = 'banc';
+        } else if (targetCard.classList.contains('empty-position')) {
+            const targetPosition = targetCard.querySelector('.position-marker').textContent;
+            draggedPlayer.position = targetPosition;
+        } else {
+            const targetPlayer = players.find(p => p.name === targetCard.dataset.playerName);
+            if (draggedPlayer && targetPlayer) {
+                const tempPosition = draggedPlayer.position;
+                draggedPlayer.position = targetPlayer.position;
+                targetPlayer.position = tempPosition;
+            }
+        }
+        
+        updateField();
+        savePlayers();
+    }
+    
+    document.querySelectorAll('.player-card').forEach(card => {
+        card.classList.remove('dragging');
+    });
+}
+
+function savePlayers() {
+    localStorage.setItem('players', JSON.stringify(players));
+}
+
 function changeFormation() {
     updateField();
 }
 
-function toggleStats() {
-    const position = document.getElementById('position').value;
-    const normalStats = document.getElementById('normalStats');
-    const gkStats = document.getElementById('gkStats');
-
-    if (position === 'GK') {
-        normalStats.style.display = 'none';
-        gkStats.style.display = 'grid';
-    } else if (position === '') {
-        normalStats.style.display = 'none';
-        gkStats.style.display = 'none';
-    } else {
-        normalStats.style.display = 'grid';
-        gkStats.style.display = 'none';
-    }
-}
 
 function createPlayerData() {
-    const playerData = {
-        name: nameInput.value,
-        photo: photoInput.value,
-        position: positionSelect.value,
-        nationality: nationalitySelect.value,
-        flag: flagUrls[nationalitySelect.value],
-        club: clubSelect.value,
-        logo: clubLogos[clubSelect.value],
-        rating: ratingInput.value
+    return {
+        name: document.getElementById('name').value,
+        photo: document.getElementById('photo').value,
+        flag: flagUrls[document.getElementById('nationality').value],
+        logo: clubLogos[document.getElementById('club').value],
+        rating: document.getElementById('rating').value,
+        position: document.getElementById('position').value,
+        pace: document.querySelector('#normalStats input[placeholder="Pace"]').value,
+        shooting: document.querySelector('#normalStats input[placeholder="Shooting"]').value,
+        passing: document.querySelector('#normalStats input[placeholder="Passing"]').value,
+        dribbling: document.querySelector('#normalStats input[placeholder="Dribbling"]').value,
+        defending: document.querySelector('#normalStats input[placeholder="Defending"]').value,
+        physical: document.querySelector('#normalStats input[placeholder="Physical"]').value
     };
-
-    if (positionSelect.value === 'GK') {
-        playerData.diving = gkStatsInputs[0].value;
-        playerData.handling = gkStatsInputs[1].value;
-        playerData.kicking = gkStatsInputs[2].value;
-        playerData.reflexes = gkStatsInputs[3].value;
-        playerData.speed = gkStatsInputs[4].value;
-        playerData.positioning = gkStatsInputs[5].value;
-    } else {
-        playerData.pace = normalStatsInputs[0].value;
-        playerData.shooting = normalStatsInputs[1].value;
-        playerData.passing = normalStatsInputs[2].value;
-        playerData.dribbling = normalStatsInputs[3].value;
-        playerData.defending = normalStatsInputs[4].value;
-        playerData.physical = normalStatsInputs[5].value;
-    }
-    return playerData;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    players = JSON.parse(localStorage.getItem('players')) || [];
+    changeFormation();
+    updateField();
+    setupInputValidation();
+});
 
 function showError(inputElement, message) {
     clearError(inputElement);
@@ -228,6 +281,23 @@ function clearError(inputElement) {
         errorDiv.style.display = 'none';
     }
     inputElement.classList.remove('input-error');
+}
+function setupInputValidation() {
+    const inputs = [
+        nameInput, 
+        photoInput, 
+        nationalitySelect, 
+        clubSelect, 
+        ratingInput, 
+        positionSelect,
+        ...normalStatsInputs,
+        ...gkStatsInputs
+    ];
+
+    inputs.forEach(input => {
+        input.addEventListener('input', () => clearError(input));
+        input.addEventListener('change', () => clearError(input));
+    });
 }
 
 function validateInputs() {
@@ -294,25 +364,8 @@ function validateInputs() {
 
     return isValid;
 }
-
 const playerForm = document.querySelector('.player-form');
-const nameInput = document.getElementById('name');
-const photoInput = document.getElementById('photo');
-const nationalitySelect = document.getElementById('nationality');
-const clubSelect = document.getElementById('club');
-const ratingInput = document.getElementById('rating');
-const positionSelect = document.getElementById('position');
-const normalStatsDiv = document.getElementById('normalStats');
-const gkStatsDiv = document.getElementById('gkStats');
-const normalStatsInputs = normalStatsDiv.querySelectorAll('input');
-const gkStatsInputs = gkStatsDiv.querySelectorAll('input');
 
-const allInputs = [nameInput, photoInput, nationalitySelect, clubSelect, ratingInput, positionSelect,
-    ...normalStatsInputs, ...gkStatsInputs];
-
-allInputs.forEach(input => {
-    input.addEventListener('input', () => clearError(input));
-});
 
 playerForm.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -326,28 +379,38 @@ playerForm.addEventListener('submit', function(e) {
     savePlayers();
     updateField();
     
-    nameInput.value = '';
-    photoInput.value = '';
-    nationalitySelect.value = '';
-    clubSelect.value = '';
-    ratingInput.value = '';
-    positionSelect.value = '';
-
-
-    normalStatsInputs.forEach(input => input.value = '');
-    gkStatsInputs.forEach(input => input.value = '');
-
-
+    this.reset();
     toggleStats();
 });
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    players = JSON.parse(localStorage.getItem('players')) || [];
-    changeFormation();
-    updateField();
-});
 
-function savePlayers() {
-    localStorage.setItem('players', JSON.stringify(players));
+function toggleStats() {
+    const positionSelect = document.getElementById('position');
+    const normalStatsDiv = document.getElementById('normalStats');
+    const gkStatsDiv = document.getElementById('gkStats');
+
+    if (positionSelect.value === 'GK') {
+        normalStatsDiv.style.display = 'none';
+        gkStatsDiv.style.display = 'grid';
+    } else {
+        normalStatsDiv.style.display = 'grid';
+        gkStatsDiv.style.display = 'none';
+    }
 }
+
+const nameInput = document.getElementById('name');
+const photoInput = document.getElementById('photo');
+const nationalitySelect = document.getElementById('nationality');
+const clubSelect = document.getElementById('club');
+const ratingInput = document.getElementById('rating');
+const positionSelect = document.getElementById('position');
+const normalStatsDiv = document.getElementById('normalStats');
+const gkStatsDiv = document.getElementById('gkStats');
+const normalStatsInputs = Array.from(document.querySelectorAll('#normalStats input[type="number"]'));
+const gkStatsInputs = Array.from(document.querySelectorAll('#gkStats input[type="number"]'));
+
+
+
+document.getElementById('position').addEventListener('change', toggleStats);
+
