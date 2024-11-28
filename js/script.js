@@ -1,6 +1,6 @@
 const flagUrls = {
     "Argentina": "https://cdn.sofifa.net/flags/ar.png",
-    "Portugal": "https://cdn.sofifa.net/flags/pt.png",
+    "Portugal": "https://cdn.sofifa.net/flags/pt.png", 
     "Belgium": "https://cdn.sofifa.net/flags/be.png",
     "France": "https://cdn.sofifa.net/flags/fr.png",
     "Netherlands": "https://cdn.sofifa.net/flags/nl.png",
@@ -35,208 +35,51 @@ const clubLogos = {
 const formations = {
     "442": {
         positions: [
-            { top: "60%", left: "43%", position: "GK" },
-            { top: "45%", left: "75%", position: "LB" }, 
-            { top: "47%", left: "58%", position: "CB" },  
-            { top: "47%", left: "27%", position: "CB" },  
-            { top: "44%", left: "9%", position: "RB" }, 
-            { top: "20%", left: "75%", position: "LM" }, 
-            { top: "25%", left: "58%", position: "CM" }, 
-            { top: "25%", left: "27%", position: "CM" }, 
-            { top: "20%", left: "9%", position: "RM" }, 
-            { top: "3%", left: "53%", position: "ST" }, 
-            { top: "3%", left: "32%", position: "ST" }  
+            { top: "82%", left: "49%", position: "GK" },
+            { top: "49%", left: "82%", position: "LB" },
+            { top: "51%", left: "61%", position: "CB" },
+            { top: "51%", left: "37%", position: "CB" },
+            { top: "49%", left: "13%", position: "RB" },
+            { top: "9%", left: "82%", position: "LM" },
+            { top: "19%", left: "61%", position: "CM" },
+            { top: "19%", left: "37%", position: "CM" },
+            { top: "9%", left: "13%", position: "RM" },
+            { top: "-10%", left: "61%", position: "ST" },
+            { top: "-10%", left: "37%", position: "ST" }
         ]
     },
     "433": {
         positions: [
-            { top: "60%", left: "43%", position: "GK" },  
-            { top: "45%", left: "75%", position: "LB" },  
-            { top: "47%", left: "58%", position: "CB" },  
-            { top: "47%", left: "27%", position: "CB" },  
-            { top: "44%", left: "9%", position: "RB" },  
-            { top: "25%", left: "65%", position: "CM" },  
-            { top: "20%", left: "42%", position: "CM" },   
-            { top: "25%", left: "20%", position: "CM" },
-            { top: "10%", left: "70%", position: "LW" },
-            { top: "2%", left: "43%", position: "ST" },  
-            { top: "10%", left: "15%", position: "RW" }  
+            { top: "82%", left: "49%", position: "GK" },
+            { top: "49%", left: "82%", position: "LB" },
+            { top: "51%", left: "61%", position: "CB" },
+            { top: "51%", left: "37%", position: "CB" },
+            { top: "49%", left: "13%", position: "RB" },
+            { top: "22%", left: "49%", position: "CM" },
+            { top: "25%", left: "71%", position: "CM" },
+            { top: "25%", left: "27%", position: "CM" },
+            { top: "-3%", left: "75%", position: "LW" },
+            { top: "-10%", left: "49%", position: "ST" },
+            { top: "-3%", left: "19%", position: "RW" }
         ]
     }
 };
 
 let players = JSON.parse(localStorage.getItem('players')) || [];
+const tempStorageKey = 'tempPlayers';
+let tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
 
-function updateField() {
-    const formationSelect = document.getElementById('formation');
-    const field = document.querySelector('.field');
-    const banc = document.querySelector('.banc');
-    field.innerHTML = '';
-    banc.innerHTML = '';
-
-    const selectedFormation = formations[formationSelect.value];
-    const usedPlayers = new Set();
-    
-    selectedFormation.positions.forEach(position => {
-        const player = players.find(p => 
-            p.position === position.position && 
-            !usedPlayers.has(p)
-        );
-        
-        if (player) {
-            usedPlayers.add(player);
-            field.appendChild(createPlayerCard(player, position));
-        } else {
-            field.appendChild(createEmptyCard(position));
-        }
-    });
-
-    const benchPlayers = players.filter(p => !usedPlayers.has(p));
-    benchPlayers.forEach(player => {
-        banc.appendChild(createPlayerCard(player, { position: 'banc' }));
-    });
-
-    const emptySlots = Math.max(0, 7 - benchPlayers.length);
-    for (let i = 0; i < emptySlots; i++) {
-        banc.appendChild(createEmptyBenchCard());
-    }
-
-    savePlayers();
-}
-
-function createPlayerCard(player, position) {
-    const card = document.createElement('div');
-    card.className = 'player-card fifa-card';
-    card.draggable = true;
-    
-    card.addEventListener('dragstart', handleDragStart);
-    card.addEventListener('dragover', handleDragOver);
-    card.addEventListener('drop', handleDrop);
-    
-    card.dataset.playerName = player.name;
-    card.dataset.position = position.position;
-    
-    card.innerHTML = `
-        <div class="card-inner">
-
-            <div class="player-image-container">
-                <img class="player-image" src="${player.photo}" alt="${player.name}">
-                <div class="card-footer">
-                <img class="flag-image" src="${player.flag}">
-                <img class="club-logo" src="${player.logo}">
-            </div>
-            </div>
-            <div class="player-name">${player.name}</div>
-            <div class="player-stats">
-                <div class="stat-row">
-                    <span class="stat">PAC ${player.pace}</span>
-                    <span class="stat">DRI ${player.dribbling}</span>
-                    <span class="stat">SHO ${player.shooting}</span>
-                    <span class="stat">DEF ${player.defending}</span>
-                </div>
-                <div class="stat-row">
-                    
-                    <span class="stat">PAS ${player.passing}</span>
-                    <span class="stat">PHY ${player.physical}</span>
-                     <span class="rating">${player.rating}</span>
-                     <span class="position">${position.position}</span>
-                </div>  
-            </div>
-           
-        </div>
-    `;
-
-    if (position.top && position.left) {
-        card.style.top = position.top;
-        card.style.left = position.left;
-    }
-
-    return card;
-}
-
-function createEmptyCard(position) {
-    const emptyCard = document.createElement('div');
-    emptyCard.className = 'player-card empty-position';
-    emptyCard.style.top = position.top;
-    emptyCard.style.left = position.left;
-    
-    emptyCard.addEventListener('dragover', handleDragOver);
-    emptyCard.addEventListener('drop', handleDrop);
-    
-    const positionMarker = document.createElement('div');
-    positionMarker.className = 'position-marker';
-    positionMarker.textContent = position.position;
-    emptyCard.appendChild(positionMarker);
-    
-    return emptyCard;
-}
-
-function createEmptyBenchCard() {
-    const emptyCard = document.createElement('div');
-    emptyCard.className = 'player-card empty-position';
-    
-    const positionMarker = document.createElement('div');
-    positionMarker.className = 'position-marker';
-    positionMarker.textContent = 'BANC';
-    emptyCard.appendChild(positionMarker);
-    
-    emptyCard.addEventListener('dragover', handleDragOver);
-    emptyCard.addEventListener('drop', handleDrop);
-    
-    return emptyCard;
-}
-
-function handleDragStart(e) {
-    e.dataTransfer.setData('text/plain', e.target.dataset.playerName);
-    e.target.classList.add('dragging');
-}
-
-function handleDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    
-    const draggedPlayerName = e.dataTransfer.getData('text/plain');
-    const draggedCard = document.querySelector(`.player-card[data-player-name="${draggedPlayerName}"]`);
-    const targetCard = e.target.closest('.player-card, .empty-position');
-    
-    if (draggedCard && targetCard) {
-        const draggedPlayer = players.find(p => p.name === draggedPlayerName);
-
-        if (targetCard.classList.contains('empty-position') && targetCard.closest('.banc')) {
-            draggedPlayer.position = 'banc';
-        } else if (targetCard.classList.contains('empty-position')) {
-            const targetPosition = targetCard.querySelector('.position-marker').textContent;
-            draggedPlayer.position = targetPosition;
-        } else {
-            const targetPlayer = players.find(p => p.name === targetCard.dataset.playerName);
-            if (draggedPlayer && targetPlayer) {
-                const tempPosition = draggedPlayer.position;
-                draggedPlayer.position = targetPlayer.position;
-                targetPlayer.position = tempPosition;
-            }
-        }
-        
-        updateField();
-        savePlayers();
-    }
-    
-    document.querySelectorAll('.player-card').forEach(card => {
-        card.classList.remove('dragging');
-    });
-}
-
-function savePlayers() {
-    localStorage.setItem('players', JSON.stringify(players));
-}
-
-function changeFormation() {
-    updateField();
-}
-
+const nameInput = document.getElementById('name');
+const photoInput = document.getElementById('photo');
+const nationalitySelect = document.getElementById('nationality');
+const clubSelect = document.getElementById('club');
+const ratingInput = document.getElementById('rating');
+const positionSelect = document.getElementById('position');
+const normalStatsDiv = document.getElementById('normalStats');
+const gkStatsDiv = document.getElementById('gkStats');
+const normalStatsInputs = Array.from(document.querySelectorAll('#normalStats input[type="number"]'));
+const gkStatsInputs = Array.from(document.querySelectorAll('#gkStats input[type="number"]'));
+const playerForm = document.querySelector('.player-form');
 
 function createPlayerData() {
     return {
@@ -255,45 +98,8 @@ function createPlayerData() {
     };
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    players = JSON.parse(localStorage.getItem('players')) || [];
-    changeFormation();
-    updateField();
-    setupInputValidation();
-});
-
-function showError(inputElement, message) {
-    clearError(inputElement);
-    let errorDiv = inputElement.nextElementSibling;
-    if (!errorDiv || !errorDiv.classList.contains('error-message')) {
-        errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        inputElement.parentNode.insertBefore(errorDiv, inputElement.nextElementSibling);
-    }
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    inputElement.classList.add('input-error');
-}
-
-function clearError(inputElement) {
-    const errorDiv = inputElement.nextElementSibling;
-    if (errorDiv && errorDiv.classList.contains('error-message')) {
-        errorDiv.style.display = 'none';
-    }
-    inputElement.classList.remove('input-error');
-}
 function setupInputValidation() {
-    const inputs = [
-        nameInput, 
-        photoInput, 
-        nationalitySelect, 
-        clubSelect, 
-        ratingInput, 
-        positionSelect,
-        ...normalStatsInputs,
-        ...gkStatsInputs
-    ];
-
+    const inputs = [nameInput, photoInput, nationalitySelect, clubSelect, ratingInput, positionSelect, ...normalStatsInputs, ...gkStatsInputs];
     inputs.forEach(input => {
         input.addEventListener('input', () => clearError(input));
         input.addEventListener('change', () => clearError(input));
@@ -364,32 +170,29 @@ function validateInputs() {
 
     return isValid;
 }
-const playerForm = document.querySelector('.player-form');
 
-
-playerForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    if (!validateInputs()) {
-        return;
+function showError(inputElement, message) {
+    clearError(inputElement);
+    let errorDiv = inputElement.nextElementSibling;
+    if (!errorDiv || !errorDiv.classList.contains('error-message')) {
+        errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        inputElement.parentNode.insertBefore(errorDiv, inputElement.nextElementSibling);
     }
-    
-    const newPlayer = createPlayerData();
-    players.push(newPlayer);
-    savePlayers();
-    updateField();
-    
-    this.reset();
-    toggleStats();
-});
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    inputElement.classList.add('input-error');
+}
 
-
+function clearError(inputElement) {
+    const errorDiv = inputElement.nextElementSibling;
+    if (errorDiv && errorDiv.classList.contains('error-message')) {
+        errorDiv.style.display = 'none';
+    }
+    inputElement.classList.remove('input-error');
+}
 
 function toggleStats() {
-    const positionSelect = document.getElementById('position');
-    const normalStatsDiv = document.getElementById('normalStats');
-    const gkStatsDiv = document.getElementById('gkStats');
-
     if (positionSelect.value === 'GK') {
         normalStatsDiv.style.display = 'none';
         gkStatsDiv.style.display = 'grid';
@@ -399,18 +202,332 @@ function toggleStats() {
     }
 }
 
-const nameInput = document.getElementById('name');
-const photoInput = document.getElementById('photo');
-const nationalitySelect = document.getElementById('nationality');
-const clubSelect = document.getElementById('club');
-const ratingInput = document.getElementById('rating');
-const positionSelect = document.getElementById('position');
-const normalStatsDiv = document.getElementById('normalStats');
-const gkStatsDiv = document.getElementById('gkStats');
-const normalStatsInputs = Array.from(document.querySelectorAll('#normalStats input[type="number"]'));
-const gkStatsInputs = Array.from(document.querySelectorAll('#gkStats input[type="number"]'));
+function createEmptyCard(position) {
+    const emptyCard = document.createElement('div');
+    emptyCard.className = 'player-card empty-position';
+    emptyCard.style.position = 'absolute';
+    emptyCard.style.top = position.top;
+    emptyCard.style.left = position.left;
+    
+    const marker = document.createElement('div');
+    marker.className = 'position-marker';
+    marker.textContent = position.position;
+    
+    emptyCard.appendChild(marker);
+    return emptyCard;
+}
+
+function createEmptyBenchCard() {
+    const emptyCard = document.createElement('div');
+    emptyCard.className = 'player-card empty-position';
+    
+    const cardInner = document.createElement('div');
+    cardInner.className = 'card-inner';
+    
+    const positionMarker = document.createElement('div');
+    positionMarker.className = 'position-marker';
+    positionMarker.textContent = 'BANC';
+    
+    emptyCard.appendChild(cardInner);
+    emptyCard.appendChild(positionMarker);
+    
+    return emptyCard;
+}
+
+function movePlayerToPosition(player, targetPosition) {
+    tempPlayers = tempPlayers.filter(p => p.name !== player.name);
+    localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
+    players = players.filter(p => p.name !== player.name);
+    const playerCard = document.createElement('div');
+    playerCard.className = 'player-card';
+    playerCard.style.position = 'absolute';
+    playerCard.style.top = targetPosition.style.top;
+    playerCard.style.left = targetPosition.style.left;
+    playerCard.dataset.playerName = player.name;
+    playerCard.innerHTML = createPlayerCard(player);
+    playerCard.addEventListener('click', function() {
+        handlePlayerClick(player);
+    });
+    targetPosition.parentElement.replaceChild(playerCard, targetPosition);
+    const playerWithPosition = {
+        ...player,
+        fieldPosition: {
+            top: targetPosition.style.top,
+            left: targetPosition.style.left
+        }
+    };
+    players.push(playerWithPosition);
+    localStorage.setItem('players', JSON.stringify(players));
+    
+    updateTempStorage();
+    document.querySelector('.temp-storage').style.display = 'none';
+}
+function updateField() {
+    const formationSelect = document.getElementById('formation');
+    const field = document.querySelector('.field');
+    const banc = document.querySelector('.banc');
+    const existingPlayers = players.slice(); 
+    field.innerHTML = '';
+    banc.innerHTML = '';
+    const selectedFormation = formations[formationSelect.value];
+    selectedFormation.positions.forEach(position => {
+        field.appendChild(createEmptyCard(position));
+    });
+    for (let i = 0; i < 12; i++) {
+        banc.appendChild(createEmptyBenchCard());
+    }
+    existingPlayers.forEach(player => {
+        const playerCard = document.createElement('div');
+        playerCard.className = 'player-card';
+        playerCard.style.position = 'absolute';
+        playerCard.dataset.playerName = player.name;
+        playerCard.innerHTML = createPlayerCard(player);
+        const emptyPositions = Array.from(field.querySelectorAll('.empty-position'));
+        const matchingPosition = emptyPositions.find(pos => {
+            const marker = pos.querySelector('.position-marker');
+            return marker && marker.textContent === player.position;
+        });
+        
+        if (matchingPosition) {
+            playerCard.style.top = matchingPosition.style.top;
+            playerCard.style.left = matchingPosition.style.left;
+            matchingPosition.parentElement.replaceChild(playerCard, matchingPosition);
+        } else {
+            const emptyBenchPosition = banc.querySelector('.empty-position');
+            if (emptyBenchPosition) {
+                playerCard.style.position = 'static'; 
+                emptyBenchPosition.parentElement.replaceChild(playerCard, emptyBenchPosition);
+            }
+        }
+    });
+    
+    setupPositionClickHandlers();
+}
+
+document.getElementById('formation').addEventListener('change', () => {
+    const existingPlayers = players.slice();
+    players = [];
+    updateField();
+    players = existingPlayers;
+    localStorage.setItem('players', JSON.stringify(players));
+});
+document.addEventListener('DOMContentLoaded', () => {
+    players = JSON.parse(localStorage.getItem('players')) || [];
+    tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    updateField();
+    updateTempStorage();
+    setupInputValidation();
+});
 
 
 
-document.getElementById('position').addEventListener('change', toggleStats);
+document.getElementById('formation').addEventListener('change', updateField);
 
+function createPlayerCard(player) {
+    return `
+        <div class="card-inner fifa-card">
+            <div class="card-header">
+                <div class="rating-position">
+                    <span class="rating">${player.rating || ''}</span>
+                    <span class="position">${player.position || ''}</span>
+                </div>
+            </div>
+            
+            <div class="player-image-wrapper">
+                <img class="player-image" src="${player.photo || ''}" alt="${player.name}">
+                <div class="card-footer">
+                <img class="flag-image" src="${player.flag || ''}" alt="flag">
+                <img class="club-logo" src="${player.logo || ''}" alt="club">
+            </div>
+            </div>
+            
+            <div class="player-name">${player.name || ''}</div>
+            
+            <div class="player-attributes">
+                <div class="attribute-row">
+                    <span class="attribute-label">PAC</span>
+                    <span class="attribute-value">${player.pace || ''}</span>
+                </div>
+                <div class="attribute-row">
+                    <span class="attribute-label">SHO</span>
+                    <span class="attribute-value">${player.shooting || ''}</span>
+                </div>
+                <div class="attribute-row">
+                    <span class="attribute-label">PAS</span>
+                    <span class="attribute-value">${player.passing || ''}</span>
+                </div>
+                <div class="attribute-row">
+                    <span class="attribute-label">DRI</span>
+                    <span class="attribute-value">${player.dribbling || ''}</span>
+                </div>
+                <div class="attribute-row">
+                    <span class="attribute-label">DEF</span>
+                    <span class="attribute-value">${player.defending || ''}</span>
+                </div>
+                <div class="attribute-row">
+                    <span class="attribute-label">PHY</span>
+                    <span class="attribute-value">${player.physical || ''}</span>
+                </div>
+            </div>
+            
+            
+        </div>
+    `;
+}
+
+document.querySelector('.temp-storage-grid').addEventListener('click', function(e) {
+    const card = e.target.closest('.player-card');
+    if (!card) return;
+    
+    const playerName = card.dataset.playerName;
+    const player = tempPlayers.find(p => p.name === playerName);
+    
+    if (player) {
+        handlePlayerClick(player);
+    }
+});
+
+function handlePlayerClick(player) {
+    const emptyPositions = Array.from(document.querySelectorAll('.field .empty-position'));
+    const matchingPosition = emptyPositions.find(pos => 
+        pos.querySelector('.position-marker').textContent === player.position
+    );
+    
+    const emptyBenchPosition = document.querySelector('.banc .empty-position');
+    
+    if (matchingPosition) {
+        movePlayerToPosition(player, matchingPosition);
+    } else if (emptyBenchPosition) {
+        movePlayerToPosition(player, emptyBenchPosition);
+    }
+}
+
+
+
+function updateTempStorage() {
+    const tempStorageGrid = document.querySelector('.temp-storage-grid');
+    let cardsHTML = '';
+    
+    tempPlayers.forEach(player => {
+        cardsHTML += createPlayerCard(player);
+    });
+    
+    tempStorageGrid.innerHTML = cardsHTML;
+}
+
+function setupPositionClickHandlers() {
+    const emptyCards = document.querySelectorAll('.field .empty-position');
+    emptyCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const positionMarker = this.querySelector('.position-marker');
+            const clickedPosition = positionMarker.textContent;
+            showMatchingPlayers(clickedPosition);
+        });
+    });
+
+    const playerCards = document.querySelectorAll('.field .player-card');
+    playerCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const playerName = card.dataset.playerName;
+            const player = players.find(p => p.name === playerName);
+            handlePlayerClick(player);
+        });
+    });
+
+
+    const benchCards = document.querySelectorAll('.banc .player-card');
+    benchCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const playerName = card.dataset.playerName;
+            const player = tempPlayers.find(p => p.name === playerName);
+            handlePlayerClick(player);
+        });
+    });
+}
+function setupBenchClickHandler() {
+    const benchCards = document.querySelectorAll('.banc .empty-position');
+    benchCards.forEach(card => {
+        card.addEventListener('click', function() {
+            showAllPlayers();
+        });
+    });
+}
+
+function showMatchingPlayers(position) {
+    const tempStorage = document.querySelector('.temp-storage');
+    const tempStorageGrid = document.querySelector('.temp-storage-grid');
+    
+    const matchingPlayers = tempPlayers.filter(player => player.position === position);
+    
+    if (matchingPlayers.length === 0) {
+        tempStorageGrid.innerHTML = `
+            <div class="empty-message">
+                <p>Aucun joueur disponible pour la position ${position}</p>
+            </div>
+        `;
+    } else {
+        let cardsHTML = '';
+        matchingPlayers.forEach(player => {
+            cardsHTML += createPlayerCard(player);
+        });
+        tempStorageGrid.innerHTML = cardsHTML;
+    }
+    
+    tempStorage.style.display = 'block';
+}
+
+function showAllPlayers() {
+    const tempStorage = document.querySelector('.temp-storage');
+    const tempStorageGrid = document.querySelector('.temp-storage-grid');
+    
+    if (tempPlayers.length === 0) {
+        tempStorageGrid.innerHTML = `
+            <div class="empty-message">
+                <p>Aucun joueur disponible</p>
+            </div>
+        `;
+    } else {
+        let cardsHTML = '';
+        tempPlayers.forEach(player => {
+            cardsHTML += createPlayerCard(player);
+        });
+        tempStorageGrid.innerHTML = cardsHTML;
+    }
+    
+    tempStorage.style.display = 'block';
+}
+
+document.querySelector('.toggle-temp-storage').addEventListener('click', function() {
+    const tempStorage = document.querySelector('.temp-storage');
+    if (tempStorage.style.display === 'none') {
+        showAllPlayers();
+    } else {
+        tempStorage.style.display = 'none';
+    }
+});
+
+playerForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!validateInputs()) {
+        return;
+    }
+    
+    const newPlayer = createPlayerData();
+    tempPlayers.push(newPlayer);
+    localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
+    
+    updateTempStorage();
+    
+    this.reset();
+    toggleStats();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    players = JSON.parse(localStorage.getItem('players')) || [];
+    tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    updateField();
+    updateTempStorage();
+    setupInputValidation();
+    setupPositionClickHandlers();
+});

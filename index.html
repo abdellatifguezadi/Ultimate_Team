@@ -8,18 +8,26 @@
     <title>Football Manager</title>
 </head>
 <body>
+    <button class="toggle-temp-storage">
+        👥 Joueurs Disponibles
+    </button>
+
+    <div class="temp-storage">
+        <div class="temp-storage-grid"></div>
+    </div>
     <header>
         <div class="header-content">
             <h1>EA FC 25 Tactics & Formations</h1>
             <p>Build Custom Tactics & Formations</p>
         </div>
         <div class="formation-selector">
-            <select id="formation" onchange="changeFormation()">
+            <select id="formation">
                 <option value="442">4-4-2</option>
                 <option value="433">4-3-3</option>
             </select>
         </div>
     </header>
+ 
     <div class="container">
         <div class="terrain">
             <img src="images/backgroundStadium.png" alt="Terrain" class="img">

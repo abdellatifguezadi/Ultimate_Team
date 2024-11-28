@@ -1,36 +1,8 @@
-header {
-    padding: 20px;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-}
 
-.formation-selector {
-    margin-top: 15px;
-}
-
-.formation-selector select {
-    width: 200px;
-    padding: 8px;
-    font-size: 16px;
-    text-align: center;
-}
-
-.header-content {
-    color: white;
-}
-
-.header-content h1 {
+* {
     margin: 0;
-    font-size: 2.5rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-.header-content p {
-    margin: 10px 0 0;
-    font-size: 1.2rem;
-    opacity: 0.9;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
@@ -51,6 +23,42 @@ body::before {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+}
+
+header {
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.header-content {
+    color: white;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.header-content p {
+    margin: 10px 0 0;
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.formation-selector {
+    margin-top: 15px;
+}
+
+.formation-selector select {
+    width: 200px;
+    padding: 8px;
+    font-size: 16px;
+    text-align: center;
 }
 
 .container {
@@ -60,6 +68,7 @@ body::before {
     padding: 20px;
     position: relative;
     flex-wrap: wrap;
+    margin-top: 30px;
 }
 
 .form {
@@ -70,9 +79,8 @@ body::before {
     padding-top: 50px;
     min-width: 300px;
     margin-bottom: 20px;
+    margin-top: 3rem;
 }
-
-
 
 .player-form {
     display: flex;
@@ -87,7 +95,6 @@ input, select {
     background-color: #1a1a1a;
     color: white;
     font-size: 14px;
-    box-sizing: border-box;
     transition: all 0.3s ease;
 }
 
@@ -130,10 +137,6 @@ button:hover {
     box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
 }
 
-button:active {
-    transform: translateY(0);
-}
-
 .error-message {
     color: #dc3545;
     font-size: 0.875rem;
@@ -152,39 +155,40 @@ button:active {
     position: relative;
     width: 100%;
     max-width: 800px;
-    margin: 0 auto;
+    margin: 40px auto;
 }
 
+.terrain .img{
+    width: 110%;
+}
 .field {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    padding-bottom: 20px;
 }
 
 .player-card {
-    position: absolute;
     width: 114px;
-    height: 133px;
-    background-image: url("../images/badge_gold.webp"); 
-    background-size: cover; 
+    height: 160px;
+    position: absolute;
+    background-image: url('../images/badge_gold.webp');
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: 6px;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     cursor: pointer;
     transition: transform 0.2s;
-    overflow: visible;
-    padding: 3px;
+}
+
+.card-inner {
+    width: 80%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    padding: 5px;
 }
-
 
 .player-image {
     width: 45px;
@@ -194,22 +198,33 @@ button:active {
     object-fit: cover;
     border: 1px solid #ddd;
 }
+
+.player-name {
+    font-size: 12px;
+    font-weight: bold;
+    margin: 3px 0;
+    color: black;
+}
+
 .player-stats {
     width: 100%;
-    margin: 5px 0;
-    font-size: 10px;
+    padding: 0 10px;
 }
 
 .stat-row {
     display: flex;
     justify-content: space-between;
-    margin: 3px 0;
+    align-items: center;
+    margin: 2px 0;
 }
+
 .stat {
-    font-size: 10px; 
+    font-size: 10px;
     color: black;
     font-weight: bold;
+    min-width: 20px;
 }
+
 .logo-container {
     display: flex;
     justify-content: center;
@@ -218,23 +233,6 @@ button:active {
     width: 100%;
     margin-top: 8px;
     height: 14px;
-}
-.card-inner {
-    width: 80%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 5px;
-    box-sizing: border-box;
-}
-
-.rating-position {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-bottom: 5px;
-    font-size: 10px; 
 }
 
 .flag-image, .club-logo {
@@ -260,16 +258,101 @@ button:active {
     white-space: nowrap;
 }
 
-.terrain .img {
-    width: 100%;
-    height: auto;
-    display: block;
+.banc {
+    margin: 37px 0;
+    padding: 10px;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    min-height: 200px;
+    background: rgba(0, 0, 0, 0.5);
 }
-.player-image-container{
+
+.banc .player-card {
+    position: relative;
+    transform: none;
+}
+
+.empty-position {
+    background-image: url('../images/badge_gold.webp');
+    opacity: 0.7;
+}
+
+.temp-storage {
+    position: fixed;
+    right: 20px;
+    top: 80px;
+    width: 900px;
+    height: auto;
+    min-height: 200px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 25px;
+    border-radius: 15px;
+    border: 2px solid #dfbe6f;
+    box-shadow: 0 8px 32px rgba(223, 190, 111, 0.2);
+    display: none;
+    z-index: 999;
+    backdrop-filter: blur(10px);
+}
+
+.temp-storage-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    padding: 20px;
+}
+
+.temp-storage .player-card {
+    position: relative;
+    transform: none;
+    margin: 0 auto;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.temp-storage .player-card:hover {
+    transform: scale(1.05);
+}
+
+.toggle-temp-storage {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    background: linear-gradient(135deg, #dfbe6f, #bc9c4e);
+    color: #000;
+    padding: 12px 24px;
+    border: 2px solid #e6c165;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
     display: flex;
-    justify-content: center;
     align-items: center;
-    margin-top: 22px;
+    gap: 8px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.toggle-temp-storage:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(223, 190, 111, 0.5);
+    background: linear-gradient(135deg, #e6c165, #d4af37);
+}
+
+.empty-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 2px solid #dfbe6f;
+    color: #dfbe6f;
+    font-size: 18px;
+    font-weight: bold;
 }
 
 @media (max-width: 1200px) {
@@ -291,79 +374,24 @@ button:active {
     input, select, button {
         padding: 8px;
     }
+    
+    .temp-storage {
+        width: 95%;
+        right: 2.5%;
+    }
+    
+    .temp-storage-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-
-
-.player-name {
-    font-size: 12px; 
-    font-weight: bold;
-    margin: 3px 0;
-    color: black;
+@media (max-width: 600px) {
+    .temp-storage-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .banc {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
-.original-position {
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    font-size: 0.8em;
-    color: #ff0000;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 1px 3px;
-    border-radius: 2px;
-}
-
-.player-card.wrong-position {
-    box-shadow: 0 0 10px 2px rgba(255, 0, 0, 0.5);
-    border: 2px solid red;
-}
-
-.original-position {
-    position: absolute;
-    bottom: 90px;
-    right: 2px;
-    font-size: 0.8em;
-    color: #ff0000;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 1px 3px;
-    border-radius: 2px;
-}
-
-.banc {
-    width: 100%; 
-    margin: 20px 0;
-    padding: 10px;
-    border: 2px dashed rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
-    gap: 10px;
-    min-height: 200px;
-}
-
-.banc .player-card {
-    position: relative;
-    transform: none;
-    margin: 5px;
-}
-
-.player-card{
-    width: 120px;
-    height: 180px;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.empty-position {
-    background-image: url('../images/badge_gold.webp');
-    opacity: 0.7;
-}
-
-.dragging {
-    opacity: 0.5;
-    cursor: grabbing;
-}
