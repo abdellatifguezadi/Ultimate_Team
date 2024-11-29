@@ -87,20 +87,38 @@ const BENCH_PLAYERS_KEY = 'benchPlayers';
 let playerBeingEdited = null;
 
 function createPlayerData() {
-    return {
+    const position = document.getElementById('position').value;
+    
+    const baseData = {
         name: document.getElementById('name').value,
         photo: document.getElementById('photo').value,
         flag: flagcdn[document.getElementById('nationality').value],
         logo: clubLogos[document.getElementById('club').value],
         rating: document.getElementById('rating').value,
-        position: document.getElementById('position').value,
-        pace: document.querySelector('#normalStats input[placeholder="Pace"]').value,
-        shooting: document.querySelector('#normalStats input[placeholder="Shooting"]').value,
-        passing: document.querySelector('#normalStats input[placeholder="Passing"]').value,
-        dribbling: document.querySelector('#normalStats input[placeholder="Dribbling"]').value,
-        defending: document.querySelector('#normalStats input[placeholder="Defending"]').value,
-        physical: document.querySelector('#normalStats input[placeholder="Physical"]').value
+        position: position
     };
+    
+    if (position === 'GK') {
+        return {
+            ...baseData,
+            diving: document.querySelector('#gkStats input[placeholder="Diving"]').value,
+            handling: document.querySelector('#gkStats input[placeholder="Handling"]').value,
+            kicking: document.querySelector('#gkStats input[placeholder="Kicking"]').value,
+            reflexes: document.querySelector('#gkStats input[placeholder="Reflexes"]').value,
+            speed: document.querySelector('#gkStats input[placeholder="Speed"]').value,
+            positioning: document.querySelector('#gkStats input[placeholder="Positioning"]').value
+        };
+    } else {
+        return {
+            ...baseData,
+            pace: document.querySelector('#normalStats input[placeholder="Pace"]').value,
+            shooting: document.querySelector('#normalStats input[placeholder="Shooting"]').value,
+            passing: document.querySelector('#normalStats input[placeholder="Passing"]').value,
+            dribbling: document.querySelector('#normalStats input[placeholder="Dribbling"]').value,
+            defending: document.querySelector('#normalStats input[placeholder="Defending"]').value,
+            physical: document.querySelector('#normalStats input[placeholder="Physical"]').value
+        };
+    }
 }
 
 function clearAllValidation() {
@@ -214,6 +232,8 @@ function createEmptyBenchCard() {
 }
 
 function createPlayer(player) {
+    const isGoalkeeper = player.position === 'GK';
+    
     return `
         <div class="card-inner">
             <div class="card-top">
@@ -231,42 +251,69 @@ function createPlayer(player) {
             </div>
             <span class="player-name">${player.name}</span>
             <div class="player-attributes">
-                <div class="attribute-column">
-                    <div class="attribute-row">
-                        <span class="attribute-label">PAC</span>
-                        <span class="attribute-value">${player.pace}</span>
+                ${isGoalkeeper ? `
+                    <div class="attribute-column">
+                        <div class="attribute-row">
+                            <span class="attribute-label">DIV</span>
+                            <span class="attribute-value">${player.diving}</span>
+                        </div>
+                        <div class="attribute-row">
+                            <span class="attribute-label">HAN</span>
+                            <span class="attribute-value">${player.handling}</span>
+                        </div>
+                        <div class="attribute-row">
+                            <span class="attribute-label">KIC</span>
+                            <span class="attribute-value">${player.kicking}</span>
+                        </div>
                     </div>
-                    <div class="attribute-row">
-                        <span class="attribute-label">SHO</span>
-                        <span class="attribute-value">${player.shooting}</span>
+                    <div class="attribute-column">
+                        <div class="attribute-row">
+                            <span class="attribute-label">REF</span>
+                            <span class="attribute-value">${player.reflexes}</span>
+                        </div>
+                        <div class="attribute-row">
+                            <span class="attribute-label">SPE</span>
+                            <span class="attribute-value">${player.speed}</span>
+                        </div>
+                        <div class="attribute-row">
+                            <span class="attribute-label">POS</span>
+                            <span class="attribute-value">${player.positioning}</span>
+                        </div>
                     </div>
-                    <div class="attribute-row">
-                        <span class="attribute-label">PAS</span>
-                        <span class="attribute-value">${player.passing}</span>
+                ` : `
+                    <div class="attribute-column">
+                        <div class="attribute-row">
+                            <span class="attribute-label">PAC</span>
+                            <span class="attribute-value">${player.pace}</span>
+                        </div>
+                        <div class="attribute-row">
+                            <span class="attribute-label">SHO</span>
+                            <span class="attribute-value">${player.shooting}</span>
+                        </div>
+                        <div class="attribute-row">
+                            <span class="attribute-label">PAS</span>
+                            <span class="attribute-value">${player.passing}</span>
+                        </div>
                     </div>
-                </div>
-                <div class="attribute-column">
-                    <div class="attribute-row">
-                        <span class="attribute-label">DRI</span>
-                        <span class="attribute-value">${player.dribbling}</span>
+                    <div class="attribute-column">
+                        <div class="attribute-row">
+                            <span class="attribute-label">DRI</span>
+                            <span class="attribute-value">${player.dribbling}</span>
+                        </div>
+                        <div class="attribute-row">
+                            <span class="attribute-label">DEF</span>
+                            <span class="attribute-value">${player.defending}</span>
+                        </div>
+                        <div class="attribute-row">
+                            <span class="attribute-label">PHY</span>
+                            <span class="attribute-value">${player.physical}</span>
+                        </div>
                     </div>
-                    <div class="attribute-row">
-                        <span class="attribute-label">DEF</span>
-                        <span class="attribute-value">${player.defending}</span>
-                    </div>
-                    <div class="attribute-row">
-                        <span class="attribute-label">PHY</span>
-                        <span class="attribute-value">${player.physical}</span>
-                    </div>
-                </div>
+                `}
             </div>
             <div class="card-actions">
-                <button class="card-btn remove-btn" onclick="removePlayerCard(event, '${player.name}')">
-                    ✕
-                </button>
-                <button class="card-btn edit-btn" onclick="editPlayerCard(event, '${player.name}')">
-                    ✎
-                </button>
+                <button class="card-btn remove-btn" onclick="removePlayerCard(event, '${player.name}')">✕</button>
+                <button class="card-btn edit-btn" onclick="editPlayerCard(event, '${player.name}')">✎</button>
             </div>
         </div>
     `;
