@@ -624,7 +624,25 @@ function removePlayerCard(event, playerName) {
     updatTemps();
 }
 
+function editPlayerCard(event, playerName) {
+    event.stopPropagation();
+    
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    
+    const player = [...terrainPlayers, ...benchPlayers, ...tempStoragePlayers]
+        .find(p => p.name === playerName);
+        
+    if (player) {
+        playerBeingEdited = {
+            ...player,
+            originalPosition: player.position
+        };
 
+        fillFormWithPlayerData(player);
+    }
+}
 
 function fillFormWithPlayerData(player) {
     document.getElementById('name').value = player.name;
