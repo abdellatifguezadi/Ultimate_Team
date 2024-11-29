@@ -1,19 +1,19 @@
-const flagUrls = {
-    "Argentina": "https://cdn.sofifa.net/flags/ar.png",
-    "Portugal": "https://cdn.sofifa.net/flags/pt.png", 
-    "Belgium": "https://cdn.sofifa.net/flags/be.png",
-    "France": "https://cdn.sofifa.net/flags/fr.png",
-    "Netherlands": "https://cdn.sofifa.net/flags/nl.png",
-    "Germany": "https://cdn.sofifa.net/flags/de.png",
-    "Brazil": "https://cdn.sofifa.net/flags/br.png",
-    "Egypt": "https://cdn.sofifa.net/flags/eg.png",
-    "Slovenia": "https://cdn.sofifa.net/flags/si.png",
-    "Croatia": "https://cdn.sofifa.net/flags/hr.png",
-    "Morocco": "https://cdn.sofifa.net/flags/ma.png",
-    "Norway": "https://cdn.sofifa.net/flags/no.png",
-    "Canada": "https://cdn.sofifa.net/flags/ca.png",
-    "England": "https://cdn.sofifa.net/flags/gb-eng.png",
-    "Italy": "https://cdn.sofifa.net/flags/it.png"
+const flagcdn = {
+    "Argentina": "https://flagcdn.com/ar.svg",
+    "Portugal": "https://flagcdn.com/pt.svg", 
+    "Belgium": "https://flagcdn.com/be.svg",
+    "France": "https://flagcdn.com/fr.svg",
+    "Netherlands": "https://flagcdn.com/nl.svg",
+    "Germany": "https://flagcdn.com/de.svg",
+    "Brazil": "https://flagcdn.com/br.svg",
+    "Egypt": "https://flagcdn.com/eg.svg",
+    "Slovenia": "https://flagcdn.com/si.svg",
+    "Croatia": "https://flagcdn.com/hr.svg",
+    "Morocco": "https://flagcdn.com/ma.svg",
+    "Norway": "https://flagcdn.com/no.svg",
+    "Canada": "https://flagcdn.com/ca.svg",
+    "England": "https://flagcdn.com/gb-eng.svg",
+    "Italy": "https://flagcdn.com/it.svg"
 };
 
 const clubLogos = {
@@ -81,11 +81,16 @@ const normalStatsInputs = Array.from(document.querySelectorAll('#normalStats inp
 const gkStatsInputs = Array.from(document.querySelectorAll('#gkStats input[type="number"]'));
 const playerForm = document.querySelector('.player-form');
 
+const terrain_players = 'terrainPlayers';
+const BENCH_PLAYERS_KEY = 'benchPlayers';
+
+let playerBeingEdited = null;
+
 function createPlayerData() {
     return {
         name: document.getElementById('name').value,
         photo: document.getElementById('photo').value,
-        flag: flagUrls[document.getElementById('nationality').value],
+        flag: flagcdn[document.getElementById('nationality').value],
         logo: clubLogos[document.getElementById('club').value],
         rating: document.getElementById('rating').value,
         position: document.getElementById('position').value,
@@ -98,7 +103,7 @@ function createPlayerData() {
     };
 }
 
-function setupInputValidation() {
+function clearAllValidation() {
     const inputs = [nameInput, photoInput, nationalitySelect, clubSelect, ratingInput, positionSelect, ...normalStatsInputs, ...gkStatsInputs];
     inputs.forEach(input => {
         input.addEventListener('input', () => clearError(input));
@@ -108,80 +113,54 @@ function setupInputValidation() {
 
 function validateInputs() {
     let isValid = true;
-
     if (!nameInput.value.trim()) {
         showError(nameInput, 'Le nom du joueur est obligatoire');
         isValid = false;
     }
-
     if (!photoInput.value.trim()) {
         showError(photoInput, 'L\'URL de la photo est obligatoire');
         isValid = false;
     }
-
     if (!nationalitySelect.value) {
         showError(nationalitySelect, 'La nationalité est obligatoire');
         isValid = false;
     }
-
     if (!clubSelect.value) {
         showError(clubSelect, 'Le club est obligatoire');
         isValid = false;
     }
-
     if (!ratingInput.value) {
-        showError(ratingInput, 'La note globale est obligatoire');
+        showError(ratingInput, 'La note est obligatoire');
         isValid = false;
-    } else {
-        const rating = parseInt(ratingInput.value);
-        if (isNaN(rating) || rating < 0 || rating > 99) {
-            showError(ratingInput, 'La note doit être comprise entre 0 et 99');
-            isValid = false;
-        }
     }
-
     if (!positionSelect.value) {
         showError(positionSelect, 'La position est obligatoire');
         isValid = false;
     }
-
+    
     const statsInputs = positionSelect.value === 'GK' ? gkStatsInputs : normalStatsInputs;
-    let hasEmptyStats = false;
-    let hasInvalidStats = false;
-
     statsInputs.forEach(input => {
         if (!input.value) {
-            hasEmptyStats = true;
-        } else {
-            const stat = parseInt(input.value);
-            if (isNaN(stat) || stat < 0 || stat > 99) {
-                hasInvalidStats = true;
-            }
+            showError(input, 'Ce champ est obligatoire');
+            isValid = false;
         }
     });
-
-    if (hasEmptyStats) {
-        showError(statsInputs[5], 'Tous les stats sont obligatoires');
-        isValid = false;
-    } else if (hasInvalidStats) {
-        showError(statsInputs[5], 'Les stats doivent être entre 0 et 99');
-        isValid = false;
-    }
-
+    
     return isValid;
 }
 
 function showError(inputElement, message) {
-    clearError(inputElement);
-    let errorDiv = inputElement.nextElementSibling;
-    if (!errorDiv || !errorDiv.classList.contains('error-message')) {
-        errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        inputElement.parentNode.insertBefore(errorDiv, inputElement.nextElementSibling);
-    }
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
     inputElement.classList.add('input-error');
+    const errorDiv = inputElement.nextElementSibling;
+    if (errorDiv && errorDiv.classList.contains('error-message')) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+    } else {
+        const newErrorDiv = document.createElement('div');
+        newErrorDiv.className = 'error-message';
+        newErrorDiv.textContent = message;
+        inputElement.parentNode.insertBefore(newErrorDiv, inputElement.nextSibling);
+    }
 }
 
 function clearError(inputElement) {
@@ -234,188 +213,196 @@ function createEmptyBenchCard() {
     return emptyCard;
 }
 
-function movePlayerToPosition(player, targetPosition) {
-    tempPlayers = tempPlayers.filter(p => p.name !== player.name);
-    localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
-    players = players.filter(p => p.name !== player.name);
-    const playerCard = document.createElement('div');
-    playerCard.className = 'player-card';
-    playerCard.style.position = 'absolute';
-    playerCard.style.top = targetPosition.style.top;
-    playerCard.style.left = targetPosition.style.left;
-    playerCard.dataset.playerName = player.name;
-    playerCard.innerHTML = createPlayerCard(player);
-    playerCard.addEventListener('click', function() {
-        handlePlayerClick(player);
-    });
-    targetPosition.parentElement.replaceChild(playerCard, targetPosition);
-    const playerWithPosition = {
-        ...player,
-        fieldPosition: {
-            top: targetPosition.style.top,
-            left: targetPosition.style.left
-        }
-    };
-    players.push(playerWithPosition);
-    localStorage.setItem('players', JSON.stringify(players));
-    
-    updateTempStorage();
-    document.querySelector('.temp-storage').style.display = 'none';
-}
-function updateField() {
-    const formationSelect = document.getElementById('formation');
-    const field = document.querySelector('.field');
-    const banc = document.querySelector('.banc');
-    const existingPlayers = players.slice(); 
-    field.innerHTML = '';
-    banc.innerHTML = '';
-    const selectedFormation = formations[formationSelect.value];
-    selectedFormation.positions.forEach(position => {
-        field.appendChild(createEmptyCard(position));
-    });
-    for (let i = 0; i < 12; i++) {
-        banc.appendChild(createEmptyBenchCard());
-    }
-    existingPlayers.forEach(player => {
-        const playerCard = document.createElement('div');
-        playerCard.className = 'player-card';
-        playerCard.style.position = 'absolute';
-        playerCard.dataset.playerName = player.name;
-        playerCard.innerHTML = createPlayerCard(player);
-        const emptyPositions = Array.from(field.querySelectorAll('.empty-position'));
-        const matchingPosition = emptyPositions.find(pos => {
-            const marker = pos.querySelector('.position-marker');
-            return marker && marker.textContent === player.position;
-        });
-        
-        if (matchingPosition) {
-            playerCard.style.top = matchingPosition.style.top;
-            playerCard.style.left = matchingPosition.style.left;
-            matchingPosition.parentElement.replaceChild(playerCard, matchingPosition);
-        } else {
-            const emptyBenchPosition = banc.querySelector('.empty-position');
-            if (emptyBenchPosition) {
-                playerCard.style.position = 'static'; 
-                emptyBenchPosition.parentElement.replaceChild(playerCard, emptyBenchPosition);
-            }
-        }
-    });
-    
-    setupPositionClickHandlers();
-}
-
-document.getElementById('formation').addEventListener('change', () => {
-    const existingPlayers = players.slice();
-    players = [];
-    updateField();
-    players = existingPlayers;
-    localStorage.setItem('players', JSON.stringify(players));
-});
-document.addEventListener('DOMContentLoaded', () => {
-    players = JSON.parse(localStorage.getItem('players')) || [];
-    tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
-    updateField();
-    updateTempStorage();
-    setupInputValidation();
-});
-
-
-
-document.getElementById('formation').addEventListener('change', updateField);
-
-function createPlayerCard(player) {
+function createPlayer(player) {
     return `
-        <div class="card-inner fifa-card">
-            <div class="card-header">
+        <div class="card-inner">
+            <div class="card-top">
+                <div class="flag-club">
+                    <img src="${player.flag}" alt="Flag" class="flag-image">
+                    <img src="${player.logo}" alt="Club" class="club-logo">
+                </div>
+                <div class="player-image-wrapper">
+                    <img src="${player.photo}" alt="${player.name}" class="player-image">
+                </div>
                 <div class="rating-position">
-                    <span class="rating">${player.rating || ''}</span>
-                    <span class="position">${player.position || ''}</span>
+                    <span class="rating">${player.rating}</span>
+                    <span class="position">${player.position}</span>
                 </div>
             </div>
-            
-            <div class="player-image-wrapper">
-                <img class="player-image" src="${player.photo || ''}" alt="${player.name}">
-                <div class="card-footer">
-                <img class="flag-image" src="${player.flag || ''}" alt="flag">
-                <img class="club-logo" src="${player.logo || ''}" alt="club">
-            </div>
-            </div>
-            
-            <div class="player-name">${player.name || ''}</div>
-            
+            <span class="player-name">${player.name}</span>
             <div class="player-attributes">
-                <div class="attribute-row">
-                    <span class="attribute-label">PAC</span>
-                    <span class="attribute-value">${player.pace || ''}</span>
+                <div class="attribute-column">
+                    <div class="attribute-row">
+                        <span class="attribute-label">PAC</span>
+                        <span class="attribute-value">${player.pace}</span>
+                    </div>
+                    <div class="attribute-row">
+                        <span class="attribute-label">SHO</span>
+                        <span class="attribute-value">${player.shooting}</span>
+                    </div>
+                    <div class="attribute-row">
+                        <span class="attribute-label">PAS</span>
+                        <span class="attribute-value">${player.passing}</span>
+                    </div>
                 </div>
-                <div class="attribute-row">
-                    <span class="attribute-label">SHO</span>
-                    <span class="attribute-value">${player.shooting || ''}</span>
-                </div>
-                <div class="attribute-row">
-                    <span class="attribute-label">PAS</span>
-                    <span class="attribute-value">${player.passing || ''}</span>
-                </div>
-                <div class="attribute-row">
-                    <span class="attribute-label">DRI</span>
-                    <span class="attribute-value">${player.dribbling || ''}</span>
-                </div>
-                <div class="attribute-row">
-                    <span class="attribute-label">DEF</span>
-                    <span class="attribute-value">${player.defending || ''}</span>
-                </div>
-                <div class="attribute-row">
-                    <span class="attribute-label">PHY</span>
-                    <span class="attribute-value">${player.physical || ''}</span>
+                <div class="attribute-column">
+                    <div class="attribute-row">
+                        <span class="attribute-label">DRI</span>
+                        <span class="attribute-value">${player.dribbling}</span>
+                    </div>
+                    <div class="attribute-row">
+                        <span class="attribute-label">DEF</span>
+                        <span class="attribute-value">${player.defending}</span>
+                    </div>
+                    <div class="attribute-row">
+                        <span class="attribute-label">PHY</span>
+                        <span class="attribute-value">${player.physical}</span>
+                    </div>
                 </div>
             </div>
-            
-            
+            <div class="card-actions">
+                <button class="card-btn remove-btn" onclick="removePlayerCard(event, '${player.name}')">
+                    ✕
+                </button>
+                <button class="card-btn edit-btn" onclick="editPlayerCard(event, '${player.name}')">
+                    ✎
+                </button>
+            </div>
         </div>
     `;
 }
 
-document.querySelector('.temp-storage-grid').addEventListener('click', function(e) {
-    const card = e.target.closest('.player-card');
-    if (!card) return;
+function updateField() {
+    const field = document.querySelector('.field');
+    const formation = document.getElementById('formation').value;
+    field.innerHTML = '';
     
-    const playerName = card.dataset.playerName;
-    const player = tempPlayers.find(p => p.name === playerName);
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+    let newTerrainPlayers = [];
+    let usedPositions = new Set();
     
-    if (player) {
-        handlePlayerClick(player);
-    }
-});
 
-function handlePlayerClick(player) {
-    const emptyPositions = Array.from(document.querySelectorAll('.field .empty-position'));
-    const matchingPosition = emptyPositions.find(pos => 
-        pos.querySelector('.position-marker').textContent === player.position
-    );
-    
-    const emptyBenchPosition = document.querySelector('.banc .empty-position');
-    
-    if (matchingPosition) {
-        movePlayerToPosition(player, matchingPosition);
-    } else if (emptyBenchPosition) {
-        movePlayerToPosition(player, emptyBenchPosition);
-    }
-}
-
-
-
-function updateTempStorage() {
-    const tempStorageGrid = document.querySelector('.temp-storage-grid');
-    let cardsHTML = '';
-    
-    tempPlayers.forEach(player => {
-        cardsHTML += createPlayerCard(player);
+    formations[formation].positions.forEach(position => {
+ 
+        if (!usedPositions.has(position.position)) {
+            const matchingPlayer = terrainPlayers.find(p => 
+                p.position === position.position && 
+                !usedPositions.has(position.position)
+            );
+            
+            if (matchingPlayer) {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card';
+                playerCard.dataset.playerName = matchingPlayer.name;
+                playerCard.innerHTML = createPlayer(matchingPlayer);
+                playerCard.style.position = 'absolute';
+                playerCard.style.top = position.top;
+                playerCard.style.left = position.left;
+                field.appendChild(playerCard);
+                
+                newTerrainPlayers.push({
+                    ...matchingPlayer,
+                    top: position.top,
+                    left: position.left
+                });
+                
+                usedPositions.add(position.position);
+            } else {
+                field.appendChild(createEmptyCard(position));
+            }
+        } else {
+            field.appendChild(createEmptyCard(position));
+        }
     });
     
-    tempStorageGrid.innerHTML = cardsHTML;
+
+    const remainingPlayers = terrainPlayers.filter(player => {
+        return !newTerrainPlayers.some(p => p.name === player.name);
+    });
+    
+    const allBenchPlayers = [...benchPlayers, ...remainingPlayers];
+    localStorage.setItem(BENCH_PLAYERS_KEY, JSON.stringify(allBenchPlayers));
+    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+    
+
+    const banc = document.querySelector('.banc');
+    banc.innerHTML = '';
+    
+    allBenchPlayers.forEach(player => {
+        const playerCard = document.createElement('div');
+        playerCard.className = 'player-card';
+        playerCard.dataset.playerName = player.name;
+        playerCard.innerHTML = createPlayer(player);
+        playerCard.style.position = 'relative';
+        banc.appendChild(playerCard);
+    });
+    
+    const remainingBenchSlots = 12 - allBenchPlayers.length;
+    for(let i = 0; i < remainingBenchSlots; i++) {
+        banc.appendChild(createEmptyBenchCard());
+    }
+    
+    positionTerrain();
+    bancVideClick();
 }
 
-function setupPositionClickHandlers() {
+
+
+function updatTemps() {
+    const tempStorageGrid = document.querySelector('.temp-storage-grid');
+    tempStorageGrid.innerHTML = '';
+    
+    tempPlayers.forEach(player => {
+        const playerCard = document.createElement('div');
+        playerCard.className = 'player-card';
+        playerCard.dataset.playerName = player.name;
+        playerCard.innerHTML = createPlayer(player);
+        
+        playerCard.addEventListener('click', () => {
+            gererClickPlayer(player);
+        });
+        
+        tempStorageGrid.appendChild(playerCard);
+    });
+}
+
+function movePlayerToPosition(player, targetPosition) {
+    tempPlayers = tempPlayers.filter(p => p.name !== player.name);
+    localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
+    
+    const isFieldPosition = targetPosition.closest('.field');
+    const playerCard = document.createElement('div');
+    playerCard.className = 'player-card';
+    playerCard.dataset.playerName = player.name;
+    playerCard.innerHTML = createPlayer(player);
+    
+    if (isFieldPosition) {
+        playerCard.style.position = 'absolute';
+        playerCard.style.top = targetPosition.style.top;
+        playerCard.style.left = targetPosition.style.left;
+        
+        const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+        terrainPlayers.push({
+            ...player,
+            top: targetPosition.style.top,
+            left: targetPosition.style.left
+        });
+        localStorage.setItem(terrain_players, JSON.stringify(terrainPlayers));
+    } else {
+        playerCard.style.position = 'relative';
+        const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+        benchPlayers.push(player);
+        localStorage.setItem(BENCH_PLAYERS_KEY, JSON.stringify(benchPlayers));
+    }
+    
+    targetPosition.parentElement.replaceChild(playerCard, targetPosition);
+    updatTemps();
+    document.querySelector('.temp-storage').style.display = 'none';
+    positionTerrain();
+}
+
+function positionTerrain() {
     const emptyCards = document.querySelectorAll('.field .empty-position');
     emptyCards.forEach(card => {
         card.addEventListener('click', function() {
@@ -430,21 +417,21 @@ function setupPositionClickHandlers() {
         card.addEventListener('click', function() {
             const playerName = card.dataset.playerName;
             const player = players.find(p => p.name === playerName);
-            handlePlayerClick(player);
+            gererClickPlayer(player);
         });
     });
-
 
     const benchCards = document.querySelectorAll('.banc .player-card');
     benchCards.forEach(card => {
         card.addEventListener('click', function() {
             const playerName = card.dataset.playerName;
             const player = tempPlayers.find(p => p.name === playerName);
-            handlePlayerClick(player);
+            gererClickPlayer(player);
         });
     });
 }
-function setupBenchClickHandler() {
+
+function bancVideClick() {
     const benchCards = document.querySelectorAll('.banc .empty-position');
     benchCards.forEach(card => {
         card.addEventListener('click', function() {
@@ -459,6 +446,8 @@ function showMatchingPlayers(position) {
     
     const matchingPlayers = tempPlayers.filter(player => player.position === position);
     
+    tempStorageGrid.innerHTML = '';
+    
     if (matchingPlayers.length === 0) {
         tempStorageGrid.innerHTML = `
             <div class="empty-message">
@@ -466,11 +455,18 @@ function showMatchingPlayers(position) {
             </div>
         `;
     } else {
-        let cardsHTML = '';
         matchingPlayers.forEach(player => {
-            cardsHTML += createPlayerCard(player);
+            const playerCard = document.createElement('div');
+            playerCard.className = 'player-card';
+            playerCard.dataset.playerName = player.name;
+            playerCard.innerHTML = createPlayer(player);
+            
+            playerCard.addEventListener('click', () => {
+                gererClickPlayer(player);
+            });
+            
+            tempStorageGrid.appendChild(playerCard);
         });
-        tempStorageGrid.innerHTML = cardsHTML;
     }
     
     tempStorage.style.display = 'block';
@@ -480,6 +476,8 @@ function showAllPlayers() {
     const tempStorage = document.querySelector('.temp-storage');
     const tempStorageGrid = document.querySelector('.temp-storage-grid');
     
+    tempStorageGrid.innerHTML = '';
+    
     if (tempPlayers.length === 0) {
         tempStorageGrid.innerHTML = `
             <div class="empty-message">
@@ -487,14 +485,38 @@ function showAllPlayers() {
             </div>
         `;
     } else {
-        let cardsHTML = '';
         tempPlayers.forEach(player => {
-            cardsHTML += createPlayerCard(player);
+            const playerCard = document.createElement('div');
+            playerCard.className = 'player-card';
+            playerCard.dataset.playerName = player.name;
+            playerCard.innerHTML = createPlayer(player);
+            
+            playerCard.addEventListener('click', () => {
+                gererClickPlayer(player);
+            });
+            
+            tempStorageGrid.appendChild(playerCard);
         });
-        tempStorageGrid.innerHTML = cardsHTML;
     }
     
     tempStorage.style.display = 'block';
+}
+
+function gererClickPlayer(player) {
+    const emptyPositions = Array.from(document.querySelectorAll('.field .empty-position'));
+    const matchingPosition = emptyPositions.find(pos => {
+        const marker = pos.querySelector('.position-marker');
+        return marker && marker.textContent === player.position;
+    });
+    
+    if (matchingPosition) {
+        movePlayerToPosition(player, matchingPosition);
+    } else {
+        const emptyBenchPosition = document.querySelector('.banc .empty-position');
+        if (emptyBenchPosition) {
+            movePlayerToPosition(player, emptyBenchPosition);
+        }
+    }
 }
 
 document.querySelector('.toggle-temp-storage').addEventListener('click', function() {
@@ -509,25 +531,134 @@ document.querySelector('.toggle-temp-storage').addEventListener('click', functio
 playerForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
-    if (!validateInputs()) {
+    if (!validateInputs()) return;
+    
+    const newPlayer = createPlayerData();
+    
+    if (playerBeingEdited) {
+        handlePlayerEdit(newPlayer);
         return;
     }
     
-    const newPlayer = createPlayerData();
     tempPlayers.push(newPlayer);
     localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
     
-    updateTempStorage();
+    updateField();
+    updatTemps();
     
+    clearAllValidation();
     this.reset();
     toggleStats();
 });
 
+function handlePlayerEdit(newPlayer) {
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    
+    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerBeingEdited.name);
+    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerBeingEdited.name);
+    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerBeingEdited.name);
+    
+    const formation = document.getElementById('formation').value;
+    const availablePosition = formations[formation].positions.find(pos => 
+        !newTerrainPlayers.some(p => p.position === pos.position)
+    );
+    
+    if (availablePosition) {
+
+        newTerrainPlayers.push({
+            ...newPlayer,
+            top: availablePosition.top,
+            left: availablePosition.left
+        });
+    } else {
+
+        newBenchPlayers.push(newPlayer);
+    }
+    
+    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+    localStorage.setItem(BENCH_PLAYERS_KEY, JSON.stringify(newBenchPlayers));
+    localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
+    
+    updateField();
+    updatTemps();
+    
+    clearAllValidation();
+
+    playerForm.reset();
+    toggleStats();
+    playerBeingEdited = null;
+
+    document.querySelector('.temp-storage').style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     players = JSON.parse(localStorage.getItem('players')) || [];
     tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    
     updateField();
-    updateTempStorage();
-    setupInputValidation();
-    setupPositionClickHandlers();
+    updatTemps();
+    clearAllValidation();
+    positionTerrain();
 });
+
+document.getElementById('formation').addEventListener('change', updateField);
+
+function removePlayerCard(event, playerName) {
+    event.stopPropagation();
+    
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    
+    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerName);
+    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerName);
+    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerName);
+    
+    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+    localStorage.setItem(BENCH_PLAYERS_KEY, JSON.stringify(newBenchPlayers));
+    localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
+    
+    updateField();
+    updatTemps();
+}
+
+
+
+function fillFormWithPlayerData(player) {
+    document.getElementById('name').value = player.name;
+    document.getElementById('photo').value = player.photo;
+    document.getElementById('nationality').value = Object.keys(flagcdn)
+        .find(key => flagcdn[key] === player.flag);
+    document.getElementById('club').value = Object.keys(clubLogos)
+        .find(key => clubLogos[key] === player.logo);
+    document.getElementById('rating').value = player.rating;
+    document.getElementById('position').value = player.position;
+    
+    toggleStats();
+    
+    if (player.position === 'GK') {
+        fillGKStats(player);
+    } else {
+        fillPlayerStats(player);
+    }
+}
+
+function fillGKStats(player) {
+    document.querySelector('#gkStats input[placeholder="Diving"]').value = player.diving;
+    document.querySelector('#gkStats input[placeholder="Handling"]').value = player.handling;
+    document.querySelector('#gkStats input[placeholder="Kicking"]').value = player.kicking;
+    document.querySelector('#gkStats input[placeholder="Reflexes"]').value = player.reflexes;
+    document.querySelector('#gkStats input[placeholder="Speed"]').value = player.speed;
+    document.querySelector('#gkStats input[placeholder="Positioning"]').value = player.positioning;
+}
+
+function fillPlayerStats(player) {
+    document.querySelector('#normalStats input[placeholder="Pace"]').value = player.pace;
+    document.querySelector('#normalStats input[placeholder="Shooting"]').value = player.shooting;
+    document.querySelector('#normalStats input[placeholder="Passing"]').value = player.passing;
+    document.querySelector('#normalStats input[placeholder="Dribbling"]').value = player.dribbling;
+    document.querySelector('#normalStats input[placeholder="Defending"]').value = player.defending;
+    document.querySelector('#normalStats input[placeholder="Physical"]').value = player.physical;
+}

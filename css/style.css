@@ -170,8 +170,8 @@ button:hover {
 }
 
 .player-card {
-    width: 114px;
-    height: 160px;
+    width: 130px;
+    height: 180px;
     position: absolute;
     background-image: url('../images/badge_gold.webp');
     background-size: cover;
@@ -180,18 +180,38 @@ button:hover {
     cursor: pointer;
     transition: transform 0.2s;
 }
-
-.card-inner {
-    width: 80%;
-    height: 100%;
+.flag-club{
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 5px;
+    justify-content: space-between;
+}
+.rating-position{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.player-attributes {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    margin-top: 5px;
+    scale: 0.9; 
 }
 
+.attribute-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.attribute-label, .attribute-value {
+    font-size: 11px;  
+    font-weight: bold;
+}
+
+
 .player-image {
-    width: 45px;
+    width: 40px;
     height: 45px;
     border-radius: 50%;
     margin: 3px;
@@ -240,7 +260,7 @@ button:hover {
     height: 22px;
     object-fit: cover;
     border-radius: 1px;
-    background-color: white;
+    background-color: inherit;
     padding: 1px;
 }
 
@@ -306,17 +326,45 @@ button:hover {
     padding: 20px;
 }
 
-.temp-storage .player-card {
+.temp-storage-grid .player-card {
     position: relative;
-    transform: none;
-    margin: 0 auto;
-    cursor: pointer;
-    transition: transform 0.2s;
+    width: 130px;    
+    height: 180px;   
+    margin: 10px;
 }
 
+
+.temp-storage-grid .player-image {
+    width: 40px;    
+    height: 45px;   
+}
+
+.temp-storage-grid .player-name {
+    font-size: 12px;  
+}
+
+.temp-storage-grid .stat {
+    font-size: 10px;  
+}
+
+.temp-storage-grid .flag-image, 
+.temp-storage-grid .club-logo {
+    width: 22px;    
+    height: 22px;
+}
+
+.fifa-card {
+    background-image: url('../images/badge_gold.webp');
+    background-size: cover;
+    background-position: center;
+    width: 130px;
+    height: 180px;
+}
 .temp-storage .player-card:hover {
     transform: scale(1.05);
 }
+
+
 
 .toggle-temp-storage {
     position: fixed;
@@ -353,6 +401,20 @@ button:hover {
     color: #dfbe6f;
     font-size: 18px;
     font-weight: bold;
+}
+
+.player-image-wrapper{
+    display: flex;
+}
+
+.card-top{
+    display: flex;
+    margin-top: 37px;
+}
+
+.rating-position{
+    margin-top: 8px;
+    margin-left: 2px;
 }
 
 @media (max-width: 1200px) {
@@ -395,3 +457,13 @@ button:hover {
     }
 }
 
+.player-attributes{
+    display: flex;
+}
+
+.card-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+}
