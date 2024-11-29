@@ -82,7 +82,7 @@ const gkStatsInputs = Array.from(document.querySelectorAll('#gkStats input[type=
 const playerForm = document.querySelector('.player-form');
 
 const terrain_players = 'terrainPlayers';
-const BENCH_PLAYERS_KEY = 'benchPlayers';
+const bench_players = 'benchPlayers';
 
 let playerBeingEdited = null;
 
@@ -325,7 +325,7 @@ function updateField() {
     field.innerHTML = '';
     
     const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
     let newTerrainPlayers = [];
     let usedPositions = new Set();
     
@@ -369,7 +369,7 @@ function updateField() {
     });
     
     const allBenchPlayers = [...benchPlayers, ...remainingPlayers];
-    localStorage.setItem(BENCH_PLAYERS_KEY, JSON.stringify(allBenchPlayers));
+    localStorage.setItem(bench_players, JSON.stringify(allBenchPlayers));
     localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
     
 
@@ -392,6 +392,7 @@ function updateField() {
     
     positionTerrain();
     bancVideClick();
+    switchPlayers();
 }
 
 
@@ -438,9 +439,9 @@ function movePlayerToPosition(player, targetPosition) {
         localStorage.setItem(terrain_players, JSON.stringify(terrainPlayers));
     } else {
         playerCard.style.position = 'relative';
-        const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+        const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
         benchPlayers.push(player);
-        localStorage.setItem(BENCH_PLAYERS_KEY, JSON.stringify(benchPlayers));
+        localStorage.setItem(bench_players, JSON.stringify(benchPlayers));
     }
     
     targetPosition.parentElement.replaceChild(playerCard, targetPosition);
@@ -488,6 +489,9 @@ function bancVideClick() {
 }
 
 function showMatchingPlayers(position) {
+    const selectedPlayer = document.querySelector('.selected-player');
+    if (selectedPlayer) return;
+
     const tempStorage = document.querySelector('.temp-storage');
     const tempStorageGrid = document.querySelector('.temp-storage-grid');
     
@@ -520,6 +524,10 @@ function showMatchingPlayers(position) {
 }
 
 function showAllPlayers() {
+
+    const selectedPlayer = document.querySelector('.selected-player');
+    if (selectedPlayer) return;
+
     const tempStorage = document.querySelector('.temp-storage');
     const tempStorageGrid = document.querySelector('.temp-storage-grid');
     
@@ -550,10 +558,14 @@ function showAllPlayers() {
 }
 
 function gererClickPlayer(player) {
+    if (!player) return;
+
     const emptyPositions = Array.from(document.querySelectorAll('.field .empty-position'));
+    
     const matchingPosition = emptyPositions.find(pos => {
         const marker = pos.querySelector('.position-marker');
-        return marker && marker.textContent === player.position;
+        if (!marker) return false;
+        return marker.textContent === player.position;
     });
     
     if (matchingPosition) {
@@ -574,7 +586,6 @@ document.querySelector('.toggle-temp-storage').addEventListener('click', functio
         tempStorage.style.display = 'none';
     }
 });
-
 playerForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -600,7 +611,7 @@ playerForm.addEventListener('submit', function(e) {
 
 function handlePlayerEdit(newPlayer) {
     const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
     const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
     
     const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerBeingEdited.name);
@@ -625,7 +636,7 @@ function handlePlayerEdit(newPlayer) {
     }
     
     localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
-    localStorage.setItem(BENCH_PLAYERS_KEY, JSON.stringify(newBenchPlayers));
+    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
     localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
     
     updateField();
@@ -656,7 +667,7 @@ function removePlayerCard(event, playerName) {
     event.stopPropagation();
     
     const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
     const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
     
     const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerName);
@@ -664,7 +675,7 @@ function removePlayerCard(event, playerName) {
     const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerName);
     
     localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
-    localStorage.setItem(BENCH_PLAYERS_KEY, JSON.stringify(newBenchPlayers));
+    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
     localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
     
     updateField();
@@ -675,7 +686,7 @@ function editPlayerCard(event, playerName) {
     event.stopPropagation();
     
     const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(BENCH_PLAYERS_KEY)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
     const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
     
     const player = [...terrainPlayers, ...benchPlayers, ...tempStoragePlayers]
@@ -726,4 +737,124 @@ function fillPlayerStats(player) {
     document.querySelector('#normalStats input[placeholder="Dribbling"]').value = player.dribbling;
     document.querySelector('#normalStats input[placeholder="Defending"]').value = player.defending;
     document.querySelector('#normalStats input[placeholder="Physical"]').value = player.physical;
+}
+
+function switchPlayers() {
+    let selectedPlayer = null;
+    const allPlayers = document.querySelectorAll('.field .player-card, .banc .player-card');
+    
+    allPlayers.forEach(player => {
+        player.addEventListener('click', function() {
+            if (!selectedPlayer) {
+                if (!this.classList.contains('empty-position')) {
+                    selectedPlayer = this;
+                    this.classList.add('selected-player');
+                }
+            } 
+            else if (this !== selectedPlayer) {
+                const player1IsField = selectedPlayer.closest('.field') !== null;
+                const player2IsField = this.closest('.field') !== null;
+                
+                if (player1IsField && player2IsField) {
+                    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+                    
+                    const player1Name = selectedPlayer.dataset.playerName;
+                    const player2 = terrainPlayers.find(p => p.name === this.dataset.playerName);
+                    const player1 = terrainPlayers.find(p => p.name === player1Name);
+                    
+                    if (player1) {
+                        if (this.classList.contains('empty-position')) {
+                            player1.top = this.style.top;
+                            player1.left = this.style.left;
+                        } else if (player2) {
+                            const tempTop = player1.top;
+                            const tempLeft = player1.left;
+                            player1.top = player2.top;
+                            player1.left = player2.left;
+                            player2.top = tempTop;
+                            player2.left = tempLeft;
+                        }
+                        
+                        localStorage.setItem(terrain_players, JSON.stringify(terrainPlayers));
+                        updateField();
+                    }
+                } 
+                else {
+                    
+                    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
+                    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+                    
+                    const player1Name = selectedPlayer.dataset.playerName;
+                    const player2Name = this.classList.contains('empty-position') ? null : this.dataset.playerName;
+                    
+                    let player1, player2;
+                    
+                    if (player1IsField) {
+                        player1 = terrainPlayers.find(p => p.name === player1Name);
+                        player2 = player2Name ? benchPlayers.find(p => p.name === player2Name) : null;
+                        
+                        if (player1) {
+                            if (this.classList.contains('empty-position')) {
+                                const newTerrainPlayers = terrainPlayers.filter(p => p.name !== player1Name);
+                                const newBenchPlayers = [...benchPlayers, {...player1, top: '', left: ''}];
+                                localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+                                localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
+                            } else if (player2) {
+                                const newTerrainPlayers = terrainPlayers.filter(p => p.name !== player1Name);
+                                newTerrainPlayers.push({
+                                    ...player2,
+                                    top: player1.top,
+                                    left: player1.left
+                                });
+                                
+                                const newBenchPlayers = benchPlayers.filter(p => p.name !== player2Name);
+                                newBenchPlayers.push({...player1, top: '', left: ''});
+                                
+                                localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+                                localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
+                            }
+                        }
+                    } else {
+                        player1 = benchPlayers.find(p => p.name === player1Name);
+                        player2 = player2Name ? terrainPlayers.find(p => p.name === player2Name) : null;
+                        
+                        if (player1) {
+                            if (this.classList.contains('empty-position')) {
+                                const newTerrainPlayers = [...terrainPlayers, {
+                                    ...player1,
+                                    top: this.style.top,
+                                    left: this.style.left
+                                }];
+                                const newBenchPlayers = benchPlayers.filter(p => p.name !== player1Name);
+                                
+                                localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+                                localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
+                            } else if (player2) {
+                                const newTerrainPlayers = terrainPlayers.filter(p => p.name !== player2Name);
+                                newTerrainPlayers.push({
+                                    ...player1,
+                                    top: player2.top,
+                                    left: player2.left
+                                });
+                                
+                                const newBenchPlayers = benchPlayers.filter(p => p.name !== player1Name);
+                                newBenchPlayers.push({...player2, top: '', left: ''});
+                                
+                                localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+                                localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
+                            }
+                        }
+                    }
+                    updateField();
+                }
+                
+                selectedPlayer.classList.remove('selected-player');
+                selectedPlayer = null;
+            }
+            else {
+                this.classList.remove('selected-player');
+                selectedPlayer = null;
+            }
+        });
+    });
 }
