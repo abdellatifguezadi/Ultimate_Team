@@ -35,39 +35,39 @@ const clubLogos = {
 const formations = {
     "442": {
         positions: [
-            { top: "82%", left: "49%", position: "GK" },
-            { top: "49%", left: "82%", position: "LB" },
-            { top: "51%", left: "61%", position: "CB" },
-            { top: "51%", left: "37%", position: "CB" },
-            { top: "49%", left: "13%", position: "RB" },
-            { top: "9%", left: "82%", position: "LM" },
-            { top: "19%", left: "61%", position: "CM" },
-            { top: "19%", left: "37%", position: "CM" },
-            { top: "9%", left: "13%", position: "RM" },
-            { top: "-10%", left: "61%", position: "ST" },
-            { top: "-10%", left: "37%", position: "ST" }
+            { top: "82%", left: "47%", position: "GK" },
+            { top: "49%", left: "80%", position: "RB" },
+            { top: "51%", left: "59%", position: "CB" },
+            { top: "51%", left: "35%", position: "CB" },
+            { top: "49%", left: "11%", position: "LB" },
+            { top: "9%", left: "80%", position: "RM" },
+            { top: "19%", left: "59%", position: "CM" },
+            { top: "19%", left: "35%", position: "CM" },
+            { top: "9%", left: "11%", position: "LM" },
+            { top: "-15%", left: "59%", position: "ST" },
+            { top: "-15%", left: "35%", position: "ST" }
         ]
     },
     "433": {
         positions: [
-            { top: "82%", left: "49%", position: "GK" },
-            { top: "49%", left: "82%", position: "LB" },
-            { top: "51%", left: "61%", position: "CB" },
-            { top: "51%", left: "37%", position: "CB" },
-            { top: "49%", left: "13%", position: "RB" },
-            { top: "22%", left: "49%", position: "CM" },
-            { top: "25%", left: "71%", position: "CM" },
-            { top: "25%", left: "27%", position: "CM" },
-            { top: "-3%", left: "75%", position: "LW" },
-            { top: "-10%", left: "49%", position: "ST" },
-            { top: "-3%", left: "19%", position: "RW" }
+            { top: "82%", left: "47%", position: "GK" },
+            { top: "49%", left: "80%", position: "RB" },
+            { top: "51%", left: "59%", position: "CB" },
+            { top: "51%", left: "35%", position: "CB" },
+            { top: "49%", left: "11%", position: "LB" },
+            { top: "22%", left: "45%", position: "CM" },
+            { top: "25%", left: "69%", position: "CM" },
+            { top: "25%", left: "22%", position: "CM" },
+            { top: "-9%", left: "75%", position: "LW" },
+            { top: "-15%", left: "46%", position: "ST" },
+            { top: "-9%", left: "16%", position: "RW" }
         ]
     }
 };
 
-let players = JSON.parse(localStorage.getItem('players')) || [];
+const terrain_players = 'terrainPlayers';
+const bench_players = 'benchPlayers';
 const tempStorageKey = 'tempPlayers';
-let tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
 
 const nameInput = document.getElementById('name');
 const photoInput = document.getElementById('photo');
@@ -81,11 +81,11 @@ const normalStatsInputs = Array.from(document.querySelectorAll('#normalStats inp
 const gkStatsInputs = Array.from(document.querySelectorAll('#gkStats input[type="number"]'));
 const playerForm = document.querySelector('.player-form');
 
-const terrain_players = 'terrainPlayers';
-const bench_players = 'benchPlayers';
-
+let players = JSON.parse(localStorage.getItem('players')) || [];
+let tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
 let playerBeingEdited = null;
 
+// cree nouveau joueur du formulaire
 function createPlayerData() {
     const position = document.getElementById('position').value;
     
@@ -121,14 +121,7 @@ function createPlayerData() {
     }
 }
 
-function clearAllValidation() {
-    const inputs = [nameInput, photoInput, nationalitySelect, clubSelect, ratingInput, positionSelect, ...normalStatsInputs, ...gkStatsInputs];
-    inputs.forEach(input => {
-        input.addEventListener('input', () => clearError(input));
-        input.addEventListener('change', () => clearError(input));
-    });
-}
-
+// verifie si formulaire bien rempli
 function validateInputs() {
     let isValid = true;
     if (!nameInput.value.trim()) {
@@ -167,6 +160,16 @@ function validateInputs() {
     return isValid;
 }
 
+// efface toutes les erreurs
+function clearAllValidation() {
+    const inputs = [nameInput, photoInput, nationalitySelect, clubSelect, ratingInput, positionSelect, ...normalStatsInputs, ...gkStatsInputs];
+    inputs.forEach(input => {
+        input.addEventListener('input', () => clearError(input));
+        input.addEventListener('change', () => clearError(input));
+    });
+}
+
+// affiche message erreur rouge
 function showError(inputElement, message) {
     inputElement.classList.add('input-error');
     const errorDiv = inputElement.nextElementSibling;
@@ -181,6 +184,7 @@ function showError(inputElement, message) {
     }
 }
 
+// enleve message erreur rouge
 function clearError(inputElement) {
     const errorDiv = inputElement.nextElementSibling;
     if (errorDiv && errorDiv.classList.contains('error-message')) {
@@ -189,6 +193,7 @@ function clearError(inputElement) {
     inputElement.classList.remove('input-error');
 }
 
+// change stats gardien/joueur normal
 function toggleStats() {
     if (positionSelect.value === 'GK') {
         normalStatsDiv.style.display = 'none';
@@ -199,38 +204,106 @@ function toggleStats() {
     }
 }
 
-function createEmptyCard(position) {
-    const emptyCard = document.createElement('div');
-    emptyCard.className = 'player-card empty-position';
-    emptyCard.style.position = 'absolute';
-    emptyCard.style.top = position.top;
-    emptyCard.style.left = position.left;
+// remplit formulaire avec joueur existant
+function fillFormWithPlayerData(player) {
+    document.getElementById('name').value = player.name;
+    document.getElementById('photo').value = player.photo;
+    document.getElementById('nationality').value = Object.keys(flagcdn)
+        .find(key => flagcdn[key] === player.flag);
+    document.getElementById('club').value = Object.keys(clubLogos)
+        .find(key => clubLogos[key] === player.logo);
+    document.getElementById('rating').value = player.rating;
+    document.getElementById('position').value = player.position;
     
-    const marker = document.createElement('div');
-    marker.className = 'position-marker';
-    marker.textContent = position.position;
+    toggleStats();
     
-    emptyCard.appendChild(marker);
-    return emptyCard;
+    if (player.position === 'GK') {
+        fillGKStats(player);
+    } else {
+        fillPlayerStats(player);
+    }
 }
 
-function createEmptyBenchCard() {
-    const emptyCard = document.createElement('div');
-    emptyCard.className = 'player-card empty-position';
-    
-    const cardInner = document.createElement('div');
-    cardInner.className = 'card-inner';
-    
-    const positionMarker = document.createElement('div');
-    positionMarker.className = 'position-marker';
-    positionMarker.textContent = 'BANC';
-    
-    emptyCard.appendChild(cardInner);
-    emptyCard.appendChild(positionMarker);
-    
-    return emptyCard;
+// remplit stats de gardien
+function fillGKStats(player) {
+    document.querySelector('#gkStats input[placeholder="Diving"]').value = player.diving;
+    document.querySelector('#gkStats input[placeholder="Handling"]').value = player.handling;
+    document.querySelector('#gkStats input[placeholder="Kicking"]').value = player.kicking;
+    document.querySelector('#gkStats input[placeholder="Reflexes"]').value = player.reflexes;
+    document.querySelector('#gkStats input[placeholder="Speed"]').value = player.speed;
+    document.querySelector('#gkStats input[placeholder="Positioning"]').value = player.positioning;
 }
 
+// remplit stats de joueur
+function fillPlayerStats(player) {
+    document.querySelector('#normalStats input[placeholder="Pace"]').value = player.pace;
+    document.querySelector('#normalStats input[placeholder="Shooting"]').value = player.shooting;
+    document.querySelector('#normalStats input[placeholder="Passing"]').value = player.passing;
+    document.querySelector('#normalStats input[placeholder="Dribbling"]').value = player.dribbling;
+    document.querySelector('#normalStats input[placeholder="Defending"]').value = player.defending;
+    document.querySelector('#normalStats input[placeholder="Physical"]').value = player.physical;
+}
+
+// modifie carte joueur existant
+function editPlayerCard(event, playerName) {
+    event.stopPropagation();
+    
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
+    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    
+    const player = [...terrainPlayers, ...benchPlayers, ...tempStoragePlayers]
+        .find(p => p.name === playerName);
+        
+    if (player) {
+        playerBeingEdited = {
+            ...player,
+            originalPosition: player.position
+        };
+
+        fillFormWithPlayerData(player);
+    }
+}
+
+// modifie joueur deja existant
+function handlePlayerEdit(newPlayer) {
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
+    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    
+    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerBeingEdited.name);
+    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerBeingEdited.name);
+    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerBeingEdited.name);
+    
+    const wasOnField = terrainPlayers.find(p => p.name === playerBeingEdited.name);
+    if (wasOnField) {
+        newTerrainPlayers.push({
+            ...newPlayer,
+            top: wasOnField.top,
+            left: wasOnField.left
+        });
+    }else if (benchPlayers.find(p => p.name === playerBeingEdited.name)) {
+        newBenchPlayers.push(newPlayer);
+    }else {
+        newTempPlayers.push(newPlayer);
+    }
+
+    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
+    localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
+    
+    updateField();
+    updatTemps();
+    
+    clearAllValidation();
+    playerForm.reset();
+    toggleStats();
+    playerBeingEdited = null;
+
+    document.querySelector('.temp-storage').style.display = 'none';
+}
+
+// cree carte visuelle joueur
 function createPlayer(player) {
     const isGoalkeeper = player.position === 'GK';
     
@@ -319,6 +392,41 @@ function createPlayer(player) {
     `;
 }
 
+// cree position vide terrain
+function createEmptyCard(position) {
+    const emptyCard = document.createElement('div');
+    emptyCard.className = 'player-card empty-position';
+    emptyCard.style.position = 'absolute';
+    emptyCard.style.top = position.top;
+    emptyCard.style.left = position.left;
+    
+    const marker = document.createElement('div');
+    marker.className = 'position-marker';
+    marker.textContent = position.position;
+    
+    emptyCard.appendChild(marker);
+    return emptyCard;
+}
+
+// cree position vide banc
+function createEmptyBenchCard() {
+    const emptyCard = document.createElement('div');
+    emptyCard.className = 'player-card empty-position';
+    
+    const cardInner = document.createElement('div');
+    cardInner.className = 'card-inner';
+    
+    const positionMarker = document.createElement('div');
+    positionMarker.className = 'position-marker';
+    positionMarker.textContent = 'BANC';
+    
+    emptyCard.appendChild(cardInner);
+    emptyCard.appendChild(positionMarker);
+    
+    return emptyCard;
+}
+
+// met les joueurs dans terrain
 function updateField() {
     const field = document.querySelector('.field');
     const formation = document.getElementById('formation').value;
@@ -327,56 +435,81 @@ function updateField() {
     const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
     const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
     let newTerrainPlayers = [];
-    let usedPositions = new Set();
     
-
+    const placedPlayers = new Set(); 
+    
+    // placer les joueurs dans leur positions naturelles
     formations[formation].positions.forEach(position => {
- 
-        if (!usedPositions.has(position.position)) {
-            const matchingPlayer = terrainPlayers.find(p => 
-                p.position === position.position && 
-                !usedPositions.has(position.position)
-            );
+        const existingPlayer = terrainPlayers.find(p => 
+            p.position === position.position && 
+            !placedPlayers.has(p.name)
+        );
+        
+        if (existingPlayer) {
+            const playerCard = document.createElement('div');
+            playerCard.className = 'player-card';
+            playerCard.dataset.playerName = existingPlayer.name;
+            playerCard.innerHTML = createPlayer(existingPlayer);
+            playerCard.style.position = 'absolute';
+            playerCard.style.top = position.top;
+            playerCard.style.left = position.left;
             
-            if (matchingPlayer) {
-                const playerCard = document.createElement('div');
-                playerCard.className = 'player-card';
-                playerCard.dataset.playerName = matchingPlayer.name;
-                playerCard.innerHTML = createPlayer(matchingPlayer);
-                playerCard.style.position = 'absolute';
-                playerCard.style.top = position.top;
-                playerCard.style.left = position.left;
-                field.appendChild(playerCard);
-                
-                newTerrainPlayers.push({
-                    ...matchingPlayer,
-                    top: position.top,
-                    left: position.left
-                });
-                
-                usedPositions.add(position.position);
-            } else {
-                field.appendChild(createEmptyCard(position));
-            }
+            field.appendChild(playerCard);
+            placedPlayers.add(existingPlayer.name);
+            newTerrainPlayers.push({
+                ...existingPlayer,
+                top: position.top,
+                left: position.left
+            });
         } else {
-            field.appendChild(createEmptyCard(position));
+            const emptyCard = createEmptyCard(position);
+            field.appendChild(emptyCard);
         }
     });
     
-
-    const remainingPlayers = terrainPlayers.filter(player => {
-        return !newTerrainPlayers.some(p => p.name === player.name);
+    // placer les joueurs restants dans positions disponibles
+    terrainPlayers.forEach(player => {
+        if (!placedPlayers.has(player.name)) {
+            const availablePosition = formations[formation].positions.find(pos => {
+                const existingCard = Array.from(field.children).find(card => 
+                    card.style.top === pos.top && 
+                    card.style.left === pos.left && 
+                    !card.classList.contains('empty-position')
+                );
+                return !existingCard;
+            });
+            
+            if (availablePosition) {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card wrong-position';
+                playerCard.dataset.playerName = player.name;
+                playerCard.innerHTML = createPlayer(player);
+                playerCard.style.position = 'absolute';
+                playerCard.style.top = availablePosition.top;
+                playerCard.style.left = availablePosition.left;
+                
+                field.appendChild(playerCard);
+                placedPlayers.add(player.name);
+                newTerrainPlayers.push({
+                    ...player,
+                    top: availablePosition.top,
+                    left: availablePosition.left
+                });
+            } else {
+                benchPlayers.push(player);
+            }
+        }
     });
     
-    const allBenchPlayers = [...benchPlayers, ...remainingPlayers];
-    localStorage.setItem(bench_players, JSON.stringify(allBenchPlayers));
-    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
-    
-
+    // mettre a jour le banc
     const banc = document.querySelector('.banc');
     banc.innerHTML = '';
     
-    allBenchPlayers.forEach(player => {
+    const uniqueBenchPlayers = benchPlayers.filter(player => 
+        !placedPlayers.has(player.name)
+    );
+    
+    uniqueBenchPlayers.forEach(player => {
         const playerCard = document.createElement('div');
         playerCard.className = 'player-card';
         playerCard.dataset.playerName = player.name;
@@ -385,71 +518,20 @@ function updateField() {
         banc.appendChild(playerCard);
     });
     
-    const remainingBenchSlots = 12 - allBenchPlayers.length;
+    const remainingBenchSlots = 12 - uniqueBenchPlayers.length;
     for(let i = 0; i < remainingBenchSlots; i++) {
         banc.appendChild(createEmptyBenchCard());
     }
+    
+    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+    localStorage.setItem(bench_players, JSON.stringify(uniqueBenchPlayers));
     
     positionTerrain();
     bancVideClick();
     switchPlayers();
 }
 
-
-
-function updatTemps() {
-    const tempStorageGrid = document.querySelector('.temp-storage-grid');
-    tempStorageGrid.innerHTML = '';
-    
-    tempPlayers.forEach(player => {
-        const playerCard = document.createElement('div');
-        playerCard.className = 'player-card';
-        playerCard.dataset.playerName = player.name;
-        playerCard.innerHTML = createPlayer(player);
-        
-        playerCard.addEventListener('click', () => {
-            gererClickPlayer(player);
-        });
-        
-        tempStorageGrid.appendChild(playerCard);
-    });
-}
-
-function movePlayerToPosition(player, targetPosition) {
-    tempPlayers = tempPlayers.filter(p => p.name !== player.name);
-    localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
-    
-    const isFieldPosition = targetPosition.closest('.field');
-    const playerCard = document.createElement('div');
-    playerCard.className = 'player-card';
-    playerCard.dataset.playerName = player.name;
-    playerCard.innerHTML = createPlayer(player);
-    
-    if (isFieldPosition) {
-        playerCard.style.position = 'absolute';
-        playerCard.style.top = targetPosition.style.top;
-        playerCard.style.left = targetPosition.style.left;
-        
-        const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-        terrainPlayers.push({
-            ...player,
-            top: targetPosition.style.top,
-            left: targetPosition.style.left
-        });
-        localStorage.setItem(terrain_players, JSON.stringify(terrainPlayers));
-    } else {
-        playerCard.style.position = 'relative';
-        const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
-        benchPlayers.push(player);
-        localStorage.setItem(bench_players, JSON.stringify(benchPlayers));
-    }
-    
-    targetPosition.parentElement.replaceChild(playerCard, targetPosition);
-    updatTemps();
-    document.querySelector('.temp-storage').style.display = 'none';
-    positionTerrain();
-}
-
+// gere clics sur terrain
 function positionTerrain() {
     const emptyCards = document.querySelectorAll('.field .empty-position');
     emptyCards.forEach(card => {
@@ -479,6 +561,48 @@ function positionTerrain() {
     });
 }
 
+// actualise liste joueurs disponibles
+function updatTemps() {
+    const tempStorageGrid = document.querySelector('.temp-storage-grid');
+    tempStorageGrid.innerHTML = '';
+    
+    tempPlayers.forEach(player => {
+        const playerCard = document.createElement('div');
+        playerCard.className = 'player-card';
+        playerCard.dataset.playerName = player.name;
+        playerCard.innerHTML = createPlayer(player);
+        
+        playerCard.addEventListener('click', () => {
+            gererClickPlayer(player);
+        });
+        
+        tempStorageGrid.appendChild(playerCard);
+    });
+}
+
+// gere clic sur joueur
+function gererClickPlayer(player) {
+    if (!player) return;
+
+    const emptyPositions = Array.from(document.querySelectorAll('.field .empty-position'));
+    
+    const matchingPosition = emptyPositions.find(pos => {
+        const marker = pos.querySelector('.position-marker');
+        if (!marker) return false;
+        return marker.textContent === player.position;
+    });
+    
+    if (matchingPosition) {
+        movePlayerToPosition(player, matchingPosition);
+    } else {
+        const emptyBenchPosition = document.querySelector('.banc .empty-position');
+        if (emptyBenchPosition) {
+            movePlayerToPosition(player, emptyBenchPosition);
+        }
+    }
+}
+
+// gere clics banc vide
 function bancVideClick() {
     const benchCards = document.querySelectorAll('.banc .empty-position');
     benchCards.forEach(card => {
@@ -488,6 +612,42 @@ function bancVideClick() {
     });
 }
 
+// affiche tous joueurs disponibles
+function showAllPlayers() {
+
+    const selectedPlayer = document.querySelector('.selected-player');
+    if (selectedPlayer) return;
+
+    const tempStorage = document.querySelector('.temp-storage');
+    const tempStorageGrid = document.querySelector('.temp-storage-grid');
+    
+    tempStorageGrid.innerHTML = '';
+    
+    if (tempPlayers.length === 0) {
+        tempStorageGrid.innerHTML = `
+            <div class="empty-message">
+                <p>Aucun joueur disponible</p>
+            </div>
+        `;
+    } else {
+        tempPlayers.forEach(player => {
+            const playerCard = document.createElement('div');
+            playerCard.className = 'player-card';
+            playerCard.dataset.playerName = player.name;
+            playerCard.innerHTML = createPlayer(player);
+            
+            playerCard.addEventListener('click', () => {
+                gererClickPlayer(player);
+            });
+            
+            tempStorageGrid.appendChild(playerCard);
+        });
+    }
+    
+    tempStorage.style.display = 'block';
+}
+
+// montre joueurs pour position
 function showMatchingPlayers(position) {
     const selectedPlayer = document.querySelector('.selected-player');
     if (selectedPlayer) return;
@@ -523,222 +683,7 @@ function showMatchingPlayers(position) {
     tempStorage.style.display = 'block';
 }
 
-function showAllPlayers() {
-
-    const selectedPlayer = document.querySelector('.selected-player');
-    if (selectedPlayer) return;
-
-    const tempStorage = document.querySelector('.temp-storage');
-    const tempStorageGrid = document.querySelector('.temp-storage-grid');
-    
-    tempStorageGrid.innerHTML = '';
-    
-    if (tempPlayers.length === 0) {
-        tempStorageGrid.innerHTML = `
-            <div class="empty-message">
-                <p>Aucun joueur disponible</p>
-            </div>
-        `;
-    } else {
-        tempPlayers.forEach(player => {
-            const playerCard = document.createElement('div');
-            playerCard.className = 'player-card';
-            playerCard.dataset.playerName = player.name;
-            playerCard.innerHTML = createPlayer(player);
-            
-            playerCard.addEventListener('click', () => {
-                gererClickPlayer(player);
-            });
-            
-            tempStorageGrid.appendChild(playerCard);
-        });
-    }
-    
-    tempStorage.style.display = 'block';
-}
-
-function gererClickPlayer(player) {
-    if (!player) return;
-
-    const emptyPositions = Array.from(document.querySelectorAll('.field .empty-position'));
-    
-    const matchingPosition = emptyPositions.find(pos => {
-        const marker = pos.querySelector('.position-marker');
-        if (!marker) return false;
-        return marker.textContent === player.position;
-    });
-    
-    if (matchingPosition) {
-        movePlayerToPosition(player, matchingPosition);
-    } else {
-        const emptyBenchPosition = document.querySelector('.banc .empty-position');
-        if (emptyBenchPosition) {
-            movePlayerToPosition(player, emptyBenchPosition);
-        }
-    }
-}
-
-document.querySelector('.toggle-temp-storage').addEventListener('click', function() {
-    const tempStorage = document.querySelector('.temp-storage');
-    if (tempStorage.style.display === 'none') {
-        showAllPlayers();
-    } else {
-        tempStorage.style.display = 'none';
-    }
-});
-playerForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    if (!validateInputs()) return;
-    
-    const newPlayer = createPlayerData();
-    
-    if (playerBeingEdited) {
-        handlePlayerEdit(newPlayer);
-        return;
-    }
-    
-    tempPlayers.push(newPlayer);
-    localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
-    
-    updateField();
-    updatTemps();
-    
-    clearAllValidation();
-    this.reset();
-    toggleStats();
-});
-
-function handlePlayerEdit(newPlayer) {
-    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
-    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
-    
-    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerBeingEdited.name);
-    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerBeingEdited.name);
-    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerBeingEdited.name);
-    
-    const formation = document.getElementById('formation').value;
-    const availablePosition = formations[formation].positions.find(pos => 
-        !newTerrainPlayers.some(p => p.position === pos.position)
-    );
-    
-    if (availablePosition) {
-
-        newTerrainPlayers.push({
-            ...newPlayer,
-            top: availablePosition.top,
-            left: availablePosition.left
-        });
-    } else {
-
-        newBenchPlayers.push(newPlayer);
-    }
-    
-    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
-    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
-    localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
-    
-    updateField();
-    updatTemps();
-    
-    clearAllValidation();
-
-    playerForm.reset();
-    toggleStats();
-    playerBeingEdited = null;
-
-    document.querySelector('.temp-storage').style.display = 'none';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    players = JSON.parse(localStorage.getItem('players')) || [];
-    tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
-    
-    updateField();
-    updatTemps();
-    clearAllValidation();
-    positionTerrain();
-});
-
-document.getElementById('formation').addEventListener('change', updateField);
-
-function removePlayerCard(event, playerName) {
-    event.stopPropagation();
-    
-    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
-    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
-    
-    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerName);
-    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerName);
-    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerName);
-    
-    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
-    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
-    localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
-    
-    updateField();
-    updatTemps();
-}
-
-function editPlayerCard(event, playerName) {
-    event.stopPropagation();
-    
-    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
-    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
-    
-    const player = [...terrainPlayers, ...benchPlayers, ...tempStoragePlayers]
-        .find(p => p.name === playerName);
-        
-    if (player) {
-        playerBeingEdited = {
-            ...player,
-            originalPosition: player.position
-        };
-
-        fillFormWithPlayerData(player);
-    }
-}
-
-function fillFormWithPlayerData(player) {
-    document.getElementById('name').value = player.name;
-    document.getElementById('photo').value = player.photo;
-    document.getElementById('nationality').value = Object.keys(flagcdn)
-        .find(key => flagcdn[key] === player.flag);
-    document.getElementById('club').value = Object.keys(clubLogos)
-        .find(key => clubLogos[key] === player.logo);
-    document.getElementById('rating').value = player.rating;
-    document.getElementById('position').value = player.position;
-    
-    toggleStats();
-    
-    if (player.position === 'GK') {
-        fillGKStats(player);
-    } else {
-        fillPlayerStats(player);
-    }
-}
-
-function fillGKStats(player) {
-    document.querySelector('#gkStats input[placeholder="Diving"]').value = player.diving;
-    document.querySelector('#gkStats input[placeholder="Handling"]').value = player.handling;
-    document.querySelector('#gkStats input[placeholder="Kicking"]').value = player.kicking;
-    document.querySelector('#gkStats input[placeholder="Reflexes"]').value = player.reflexes;
-    document.querySelector('#gkStats input[placeholder="Speed"]').value = player.speed;
-    document.querySelector('#gkStats input[placeholder="Positioning"]').value = player.positioning;
-}
-
-function fillPlayerStats(player) {
-    document.querySelector('#normalStats input[placeholder="Pace"]').value = player.pace;
-    document.querySelector('#normalStats input[placeholder="Shooting"]').value = player.shooting;
-    document.querySelector('#normalStats input[placeholder="Passing"]').value = player.passing;
-    document.querySelector('#normalStats input[placeholder="Dribbling"]').value = player.dribbling;
-    document.querySelector('#normalStats input[placeholder="Defending"]').value = player.defending;
-    document.querySelector('#normalStats input[placeholder="Physical"]').value = player.physical;
-}
-
+// echange position deux joueurs
 function switchPlayers() {
     let selectedPlayer = null;
     const allPlayers = document.querySelectorAll('.field .player-card, .banc .player-card');
@@ -858,3 +803,107 @@ function switchPlayers() {
         });
     });
 }
+
+// supprime joueur du jeu
+function removePlayerCard(event, playerName) {
+    event.stopPropagation();
+    
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
+    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    
+    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerName);
+    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerName);
+    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerName);
+    
+    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
+    localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
+    
+    updateField();
+    updatTemps();
+}
+
+
+
+// place joueur nouvelle position
+function movePlayerToPosition(player, targetPosition) {
+    tempPlayers = tempPlayers.filter(p => p.name !== player.name);
+    localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
+    
+    const isFieldPosition = targetPosition.closest('.field');
+    const playerCard = document.createElement('div');
+    playerCard.className = 'player-card';
+    playerCard.dataset.playerName = player.name;
+    playerCard.innerHTML = createPlayer(player);
+    
+    if (isFieldPosition) {
+        playerCard.style.position = 'absolute';
+        playerCard.style.top = targetPosition.style.top;
+        playerCard.style.left = targetPosition.style.left;
+        
+        const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+        terrainPlayers.push({
+            ...player,
+            top: targetPosition.style.top,
+            left: targetPosition.style.left
+        });
+        localStorage.setItem(terrain_players, JSON.stringify(terrainPlayers));
+    } else {
+        playerCard.style.position = 'relative';
+        const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
+        benchPlayers.push(player);
+        localStorage.setItem(bench_players, JSON.stringify(benchPlayers));
+    }
+    
+    targetPosition.parentElement.replaceChild(playerCard, targetPosition);
+    updatTemps();
+    document.querySelector('.temp-storage').style.display = 'none';
+    positionTerrain();
+}
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    players = JSON.parse(localStorage.getItem('players')) || [];
+    tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
+    
+    updateField();
+    updatTemps();
+    clearAllValidation();
+    positionTerrain();
+});
+
+document.getElementById('formation').addEventListener('change', updateField);
+
+document.querySelector('.toggle-temp-storage').addEventListener('click', function() {
+    const tempStorage = document.querySelector('.temp-storage');
+    if (tempStorage.style.display === 'none') {
+        showAllPlayers();
+    } else {
+        tempStorage.style.display = 'none';
+    }
+});
+
+
+playerForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!validateInputs()) return;
+    
+    const newPlayer = createPlayerData();
+    
+    if (playerBeingEdited) {
+        handlePlayerEdit(newPlayer);
+        return;
+    }
+    
+    tempPlayers.push(newPlayer);
+    localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
+    
+    updateField();
+    updatTemps();
+    clearAllValidation();
+    this.reset();
+    toggleStats();
+});
