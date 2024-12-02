@@ -139,20 +139,34 @@ button:hover {
     box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
 }
 
-.error-message {
-    color: #dc3545;
-    font-size: 0.875rem;
-    margin-top: 4px;
+.toggle-temp-storage.desktop-btn {
+    display: block;
+}
+
+.toggle-temp-storage.mobile-btn {
     display: none;
-    background-color: #1a1a1a;
-    padding: 5px;
-    border-radius: 5px;
+    z-index: 1001;
+}
+
+
+.form-errors {
+    background-color: black;
+    border: 1px solid red;
+    color: red;
+    margin: 10px 0;
+    text-align: center;
+    padding: 6px;
 }
 
 .input-error {
-    border-color: #dc3545 !important;
+    border: 2px solid red;
+    background-color: white;
+    color: #000;
 }
 
+.input-error:focus {
+    outline-color: red;
+}
 .terrain {
     position: relative;
     width: 100%;
@@ -445,3 +459,108 @@ button:hover {
     font-size: 19px;
 }
 
+@media (max-width: 1200px) {
+    .form {
+        padding-top: 0px;
+    }
+    .toggle-temp-storage{
+        width: 110px;
+        padding-left: 0px;
+    }
+}
+
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    #normalStats, #gkStats {
+        grid-template-columns: 1fr;
+    }
+
+    input, select, button {
+        padding: 8px;
+    }
+    
+    .temp-storage {
+        width: 95%;
+        right: 2.5%;
+    }
+    
+    .temp-storage-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .banc{
+        grid-template-columns: repeat(4, 1fr);
+    }
+    .toggle-temp-storage{
+        width: 166px;
+        padding-left: 24px;
+    }
+}
+
+@media (max-width: 600px) {
+    .temp-storage-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .banc {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 500px) {
+    .player-card {
+        transform: scale(0.5);
+    }
+    .field {
+        margin-top: -12%;
+        margin-left: -32px;
+    }
+    .banc .player-card {
+        transform: scale(0.5);
+    }
+    .banc {
+        gap: 5px;
+        padding: 5px;
+        margin-left: 24px;
+    }
+    .temp-storage .player-card {
+        transform: scale(0.5);
+    }
+    .temp-storage {
+        width: 95%;
+        padding: 10px;
+        right: 2.5%;
+    }
+    .temp-storage-grid {
+        gap: 5px; 
+        grid-template-columns: repeat(2, 1fr); 
+    }
+    .toggle-temp-storage{
+        width: 37px;
+        height: 40px;
+        padding: 12px 7px
+    }
+
+    .toggle-temp-storage.desktop-btn {
+        display: none; 
+    }
+    
+    .toggle-temp-storage.mobile-btn {
+        display: block;  
+    }
+}
+
+.total-chemistry {
+    margin: 15px auto 0;  /* Margin mn lfu9 */
+    background: linear-gradient(135deg, #dfbe6f, #bc9c4e);
+    color: #000;
+    padding: 15px 30px;
+    border-radius: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    border: 2px solid #e6c165;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}

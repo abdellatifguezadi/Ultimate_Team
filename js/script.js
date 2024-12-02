@@ -1,3 +1,4 @@
+
 const flagcdn = {
     "Argentina": "https://flagcdn.com/ar.svg",
     "Portugal": "https://flagcdn.com/pt.svg", 
@@ -65,6 +66,8 @@ const formations = {
     }
 };
 
+
+
 const terrain_players = 'terrainPlayers';
 const bench_players = 'benchPlayers';
 const tempStorageKey = 'tempPlayers';
@@ -84,6 +87,24 @@ const playerForm = document.querySelector('.player-form');
 let players = JSON.parse(localStorage.getItem('players')) || [];
 let tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
 let playerBeingEdited = null;
+
+const clubLeagues = {
+    "Inter Miami": "MLS",
+    "Al Nassr": "Saudi Pro League",
+    "Manchester City": "Premier League",
+    "Real Madrid": "La Liga",
+    "Liverpool": "Premier League",
+    "Al-Hilal": "Saudi Pro League",
+    "Bayern Munich": "Bundesliga",
+    "Atletico Madrid": "La Liga",
+    "Al-Ittihad": "Saudi Pro League",
+    "Manchester United": "Premier League",
+    "Paris Saint-Germain": "Ligue 1",
+    "Fenerbahçe": "Super Lig",
+    "PSV": "Eredivisie"
+};
+
+
 
 // cree nouveau joueur du formulaire
 function createPlayerData() {
@@ -124,10 +145,14 @@ function createPlayerData() {
 // verifie si formulaire bien rempli
 function validateInputs() {
     let isValid = true;
+    
+    
+    
     if (!nameInput.value.trim()) {
-        showError(nameInput, 'Le nom du joueur est obligatoire');
+        showError(nameInput, 'Le nom est obligatoire');
         isValid = false;
     }
+    
     if (!photoInput.value.trim()) {
         showError(photoInput, 'L\'URL de la photo est obligatoire');
         isValid = false;
@@ -171,24 +196,25 @@ function clearAllValidation() {
 
 // affiche message erreur rouge
 function showError(inputElement, message) {
+    const errorContainer = document.querySelector('.form-errors') || createErrorContainer();
+    errorContainer.textContent = message;
+    errorContainer.style.display = 'block';
     inputElement.classList.add('input-error');
-    const errorDiv = inputElement.nextElementSibling;
-    if (errorDiv && errorDiv.classList.contains('error-message')) {
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-    } else {
-        const newErrorDiv = document.createElement('div');
-        newErrorDiv.className = 'error-message';
-        newErrorDiv.textContent = message;
-        inputElement.parentNode.insertBefore(newErrorDiv, inputElement.nextSibling);
-    }
+}
+
+// crée le conteneur d'erreur
+function createErrorContainer() {
+    const container = document.createElement('div');
+    container.className = 'form-errors';
+    playerForm.insertBefore(container, playerForm.firstChild);
+    return container;
 }
 
 // enleve message erreur rouge
 function clearError(inputElement) {
-    const errorDiv = inputElement.nextElementSibling;
-    if (errorDiv && errorDiv.classList.contains('error-message')) {
-        errorDiv.style.display = 'none';
+    const errorContainer = document.querySelector('.form-errors');
+    if (errorContainer) {
+        errorContainer.style.display = 'none';
     }
     inputElement.classList.remove('input-error');
 }
@@ -293,6 +319,7 @@ function handlePlayerEdit(newPlayer) {
     localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
     
     updateField();
+    teamChemistry();
     updatTemps();
     
     clearAllValidation();
@@ -529,6 +556,8 @@ function updateField() {
     positionTerrain();
     bancVideClick();
     switchPlayers();
+    
+    document.dispatchEvent(new Event('fieldUpdate'));
 }
 
 // gere clics sur terrain
@@ -722,6 +751,7 @@ function switchPlayers() {
                         
                         localStorage.setItem(terrain_players, JSON.stringify(terrainPlayers));
                         updateField();
+                        teamChemistry();
                     }
                 } 
                 else {
@@ -791,6 +821,7 @@ function switchPlayers() {
                         }
                     }
                     updateField();
+                    teamChemistry();
                 }
                 
                 selectedPlayer.classList.remove('selected-player');
@@ -821,6 +852,7 @@ function removePlayerCard(event, playerName) {
     localStorage.setItem(tempStorageKey, JSON.stringify(newTempPlayers));
     
     updateField();
+    teamChemistry();
     updatTemps();
 }
 
@@ -860,8 +892,97 @@ function movePlayerToPosition(player, targetPosition) {
     updatTemps();
     document.querySelector('.temp-storage').style.display = 'none';
     positionTerrain();
+    updateField();
+    teamChemistry();
 }
 
+
+// calcule la chimie individuelle
+function playerChemistry(player, allPlayers, formation) {
+    let chemistry = 0;
+
+    const positionInfo = formations[formation].positions.find(pos => 
+        pos.top === player.top && pos.left === player.left
+    );
+    if (positionInfo && positionInfo.position === player.position) {
+        chemistry += 10;
+    }
+    
+    const adjacentPlayers = findAdjacentPlayers(player, allPlayers);
+    
+    if (adjacentPlayers.length > 0) {
+        const hasClubLink = adjacentPlayers.some(p => 
+            getClub(p.logo) === getClub(player.logo)
+        );
+        if (hasClubLink) {
+            chemistry += 3;
+        }
+        
+        const leagueLinkCount = Math.min(2, adjacentPlayers.filter(p => 
+            clubLeagues[getClub(p.logo)] === clubLeagues[getClub(player.logo)]
+        ).length);
+        chemistry += leagueLinkCount * 2;
+        
+        const hasNationalityLink = adjacentPlayers.some(p => 
+            getNationality(p.flag) === getNationality(player.flag)
+        );
+        if (hasNationalityLink) {
+            chemistry += 1;
+        }
+    }
+    
+    return chemistry;
+}
+
+// trouve les joueurs adjacents
+function findAdjacentPlayers(player, allPlayers) {
+    const threshold = 50; 
+    
+    return allPlayers.filter(p => {
+        if (p.name === player.name) return false;
+        
+        const xDiff = Math.abs(parseFloat(p.left) - parseFloat(player.left));
+        const yDiff = Math.abs(parseFloat(p.top) - parseFloat(player.top));
+        
+        return Math.sqrt(xDiff * xDiff + yDiff * yDiff) <= threshold;
+    });
+}
+
+
+// affichage du score total
+function teamChemistry() {
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const formation = document.getElementById('formation').value;
+    
+    let totalChemistry = 0;
+    terrainPlayers.forEach(player => {
+        totalChemistry += playerChemistry(player, terrainPlayers, formation);
+    });
+    
+    const chemistryDisplay = document.querySelector('.total-chemistry') || 
+        createChemistryDisplay();
+    chemistryDisplay.textContent = `Score Formation: ${totalChemistry}/198`;
+}
+
+
+// element d'affichage du score
+function createChemistryDisplay() {
+    const display = document.createElement('div');
+    display.className = 'total-chemistry';
+    document.querySelector('.formation-selector').appendChild(display);
+    return display;
+}
+
+
+
+function getClub(logoUrl) {
+    return Object.keys(clubLogos).find(club => clubLogos[club] === logoUrl);
+}
+
+
+function getNationality(flagUrl) {
+    return Object.keys(flagcdn).find(nationality => flagcdn[nationality] === flagUrl);
+}
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -869,20 +990,27 @@ document.addEventListener('DOMContentLoaded', () => {
     tempPlayers = JSON.parse(localStorage.getItem(tempStorageKey)) || [];
     
     updateField();
+    teamChemistry();
     updatTemps();
     clearAllValidation();
     positionTerrain();
+    addClick();
 });
 
-document.getElementById('formation').addEventListener('change', updateField);
+document.getElementById('formation').addEventListener('change', function() {
+    updateField();
+    teamChemistry();
+});
 
-document.querySelector('.toggle-temp-storage').addEventListener('click', function() {
-    const tempStorage = document.querySelector('.temp-storage');
-    if (tempStorage.style.display === 'none') {
-        showAllPlayers();
-    } else {
-        tempStorage.style.display = 'none';
-    }
+document.querySelectorAll('.toggle-temp-storage').forEach(button => {
+    button.addEventListener('click', function() {
+        const tempStorage = document.querySelector('.temp-storage');
+        if (tempStorage.style.display === 'none') {
+            showAllPlayers();
+        } else {
+            tempStorage.style.display = 'none';
+        }
+    });
 });
 
 
@@ -902,6 +1030,7 @@ playerForm.addEventListener('submit', function(e) {
     localStorage.setItem(tempStorageKey, JSON.stringify(tempPlayers));
     
     updateField();
+    teamChemistry();
     updatTemps();
     clearAllValidation();
     this.reset();
