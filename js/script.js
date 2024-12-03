@@ -86,6 +86,8 @@ const playerForm = document.querySelector('.player-form');
 let players = JSON.parse(localStorage.getItem('players')) || [];
 let tempPlayers = JSON.parse(localStorage.getItem(tempsPlayers)) || [];
 let playerForEdit = null;
+const FORMATION_KEY = 'selectedFormation';
+
 
 const clubLeagues = {
     "Inter Miami": "MLS",
@@ -103,41 +105,14 @@ const clubLeagues = {
     "PSV": "Eredivisie"
 };
 
-
-
-// cree nouveau joueur du formulaire
-function createPlayerData() {
-    const position = document.getElementById('position').value;
-    
-    const baseData = {
-        name: document.getElementById('name').value,
-        photo: document.getElementById('photo').value,
-        flag: flagcdn[document.getElementById('nationality').value],
-        logo: clubLogos[document.getElementById('club').value],
-        rating: document.getElementById('rating').value,
-        position: position
-    };
-    
-    if (position === 'GK') {
-        return {
-            ...baseData,
-            diving: document.querySelector('#gkStats input[placeholder="Diving"]').value,
-            handling: document.querySelector('#gkStats input[placeholder="Handling"]').value,
-            kicking: document.querySelector('#gkStats input[placeholder="Kicking"]').value,
-            reflexes: document.querySelector('#gkStats input[placeholder="Reflexes"]').value,
-            speed: document.querySelector('#gkStats input[placeholder="Speed"]').value,
-            positioning: document.querySelector('#gkStats input[placeholder="Positioning"]').value
-        };
+// change stats gardien/joueur normal
+function toggleStats() {
+    if (positionSelect.value === 'GK') {
+        normalStatsDiv.style.display = 'none';
+        gkStatsDiv.style.display = 'grid';
     } else {
-        return {
-            ...baseData,
-            pace: document.querySelector('#normalStats input[placeholder="Pace"]').value,
-            shooting: document.querySelector('#normalStats input[placeholder="Shooting"]').value,
-            passing: document.querySelector('#normalStats input[placeholder="Passing"]').value,
-            dribbling: document.querySelector('#normalStats input[placeholder="Dribbling"]').value,
-            defending: document.querySelector('#normalStats input[placeholder="Defending"]').value,
-            physical: document.querySelector('#normalStats input[placeholder="Physical"]').value
-        };
+        normalStatsDiv.style.display = 'grid';
+        gkStatsDiv.style.display = 'none';
     }
 }
 
@@ -183,6 +158,7 @@ function validateInputs() {
     return isValid;
 }
 
+
 // efface toutes les erreurs
 function clearAllValidation() {
     const inputs = [nameInput, photoInput, nationalitySelect, clubSelect, ratingInput, positionSelect, ...normalStatsInputs, ...gkStatsInputs];
@@ -217,135 +193,74 @@ function clearError(inputElement) {
     inputElement.classList.remove('input-error');
 }
 
-// change stats gardien/joueur normal
-function toggleStats() {
-    if (positionSelect.value === 'GK') {
-        normalStatsDiv.style.display = 'none';
-        gkStatsDiv.style.display = 'grid';
-    } else {
-        normalStatsDiv.style.display = 'grid';
-        gkStatsDiv.style.display = 'none';
-    }
+// cree position vide terrain
+function createEmptyCard(position) {
+    const emptyCard = document.createElement('div');
+    emptyCard.className = 'player-card empty-position';
+    emptyCard.style.position = 'absolute';
+    emptyCard.style.top = position.top;
+    emptyCard.style.left = position.left;
+    
+    const marker = document.createElement('div');
+    marker.className = 'position-marker';
+    marker.textContent = position.position;
+    
+    emptyCard.appendChild(marker);
+    return emptyCard;
 }
 
-// remplit formulaire avec joueur existant
-function fillFormWithPlayerData(player) {
-    document.getElementById('name').value = player.name;
-    document.getElementById('photo').value = player.photo;
-    document.getElementById('nationality').value = Object.keys(flagcdn)
-        .find(key => flagcdn[key] === player.flag);
-    document.getElementById('club').value = Object.keys(clubLogos)
-        .find(key => clubLogos[key] === player.logo);
-    document.getElementById('rating').value = player.rating;
-    document.getElementById('position').value = player.position;
+// cree position vide banc
+function createEmptyBenchCard() {
+    const emptyCard = document.createElement('div');
+    emptyCard.className = 'player-card empty-position';
     
-    toggleStats();
+    const cardInner = document.createElement('div');
+    cardInner.className = 'card-inner';
     
-    if (player.position === 'GK') {
-        fillGKStats(player);
-    } else {
-        fillPlayerStats(player);
-    }
+    const positionMarker = document.createElement('div');
+    positionMarker.className = 'position-marker';
+    positionMarker.textContent = 'BANC';
+    
+    emptyCard.appendChild(cardInner);
+    emptyCard.appendChild(positionMarker);
+    
+    return emptyCard;
 }
 
-// remplit stats de gardien
-function fillGKStats(player) {
-    document.querySelector('#gkStats input[placeholder="Diving"]').value = player.diving;
-    document.querySelector('#gkStats input[placeholder="Handling"]').value = player.handling;
-    document.querySelector('#gkStats input[placeholder="Kicking"]').value = player.kicking;
-    document.querySelector('#gkStats input[placeholder="Reflexes"]').value = player.reflexes;
-    document.querySelector('#gkStats input[placeholder="Speed"]').value = player.speed;
-    document.querySelector('#gkStats input[placeholder="Positioning"]').value = player.positioning;
-}
-
-// remplit stats de joueur
-function fillPlayerStats(player) {
-    document.querySelector('#normalStats input[placeholder="Pace"]').value = player.pace;
-    document.querySelector('#normalStats input[placeholder="Shooting"]').value = player.shooting;
-    document.querySelector('#normalStats input[placeholder="Passing"]').value = player.passing;
-    document.querySelector('#normalStats input[placeholder="Dribbling"]').value = player.dribbling;
-    document.querySelector('#normalStats input[placeholder="Defending"]').value = player.defending;
-    document.querySelector('#normalStats input[placeholder="Physical"]').value = player.physical;
-}
-
-// modifie carte joueur existant
-function editPlayerCard(event, playerName) {
-    event.stopPropagation();
+// cree nouveau joueur du formulaire
+function createPlayerData() {
+    const position = document.getElementById('position').value;
     
-    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
-    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempsPlayers)) || [];
+    const baseData = {
+        name: document.getElementById('name').value,
+        photo: document.getElementById('photo').value,
+        flag: flagcdn[document.getElementById('nationality').value],
+        logo: clubLogos[document.getElementById('club').value],
+        rating: document.getElementById('rating').value,
+        position: position
+    };
     
-    const player = [...terrainPlayers, ...benchPlayers, ...tempStoragePlayers]
-        .find(p => p.name === playerName);
-        
-    if (player) {
-        playerForEdit = {
-            ...player,
-            originalPosition: player.position
+    if (position === 'GK') {
+        return {
+            ...baseData,
+            diving: document.querySelector('#gkStats input[placeholder="Diving"]').value,
+            handling: document.querySelector('#gkStats input[placeholder="Handling"]').value,
+            kicking: document.querySelector('#gkStats input[placeholder="Kicking"]').value,
+            reflexes: document.querySelector('#gkStats input[placeholder="Reflexes"]').value,
+            speed: document.querySelector('#gkStats input[placeholder="Speed"]').value,
+            positioning: document.querySelector('#gkStats input[placeholder="Positioning"]').value
         };
-
-        const submitButton = playerForm.querySelector('button[type="submit"]');
-        submitButton.textContent = 'Modifier Joueur';
-
-        fillFormWithPlayerData(player);
-    }
-}
-
-// modifie joueur deja existant
-function handlePlayerEdit(newPlayer) {
-    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
-    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempsPlayers)) || [];
-
-    const wasOnField = terrainPlayers.find(p => p.name === playerForEdit.name);
-    const wasOnBench = benchPlayers.find(p => p.name === playerForEdit.name);
-    const wasInTemp = tempStoragePlayers.find(p => p.name === playerForEdit.name);
-    
-
-    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerForEdit.name);
-    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerForEdit.name);
-    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerForEdit.name);
-    
-
-    if (wasOnField) {
-        newTerrainPlayers.push({
-            ...newPlayer,
-            top: wasOnField.top,
-            left: wasOnField.left
-        });
-    } else if (wasOnBench) {
-        newBenchPlayers.push(newPlayer);
-    } else if (wasInTemp) {
-        newTempPlayers.push(newPlayer);
-    }
-
-
-    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
-    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
-    localStorage.setItem(tempsPlayers, JSON.stringify(newTempPlayers));
-
-    tempPlayers = newTempPlayers;
-
-    updateField();
-    teamChemistry();
-    updatTemps();
-
-    const tempStorage = document.querySelector('.temp-storage');
-    if (wasInTemp) {
-        showAllPlayers();
-        tempStorage.style.display = 'block';
     } else {
-        tempStorage.style.display = 'none';
+        return {
+            ...baseData,
+            pace: document.querySelector('#normalStats input[placeholder="Pace"]').value,
+            shooting: document.querySelector('#normalStats input[placeholder="Shooting"]').value,
+            passing: document.querySelector('#normalStats input[placeholder="Passing"]').value,
+            dribbling: document.querySelector('#normalStats input[placeholder="Dribbling"]').value,
+            defending: document.querySelector('#normalStats input[placeholder="Defending"]').value,
+            physical: document.querySelector('#normalStats input[placeholder="Physical"]').value
+        };
     }
-
-    clearAllValidation();
-    playerForm.reset();
-    toggleStats();
-    playerForEdit = null;
-
-    const submitButton = playerForm.querySelector('button[type="submit"]');
-    submitButton.textContent = 'Ajouter Joueur';
 }
 
 // cree carte visuelle joueur
@@ -437,39 +352,152 @@ function createPlayer(player) {
     `;
 }
 
-// cree position vide terrain
-function createEmptyCard(position) {
-    const emptyCard = document.createElement('div');
-    emptyCard.className = 'player-card empty-position';
-    emptyCard.style.position = 'absolute';
-    emptyCard.style.top = position.top;
-    emptyCard.style.left = position.left;
+// supprime joueur du jeu
+function removePlayerCard(event, playerName) {
+    event.stopPropagation();
     
-    const marker = document.createElement('div');
-    marker.className = 'position-marker';
-    marker.textContent = position.position;
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
+    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempsPlayers)) || [];
     
-    emptyCard.appendChild(marker);
-    return emptyCard;
+    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerName);
+    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerName);
+    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerName);
+    
+    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
+    localStorage.setItem(tempsPlayers, JSON.stringify(newTempPlayers));
+    
+    updateField();
+    teamChemistry();
+    updatTemps();
 }
 
-// cree position vide banc
-function createEmptyBenchCard() {
-    const emptyCard = document.createElement('div');
-    emptyCard.className = 'player-card empty-position';
+
+
+// modifie carte joueur existant
+function editPlayerCard(event, playerName) {
+    event.stopPropagation();
     
-    const cardInner = document.createElement('div');
-    cardInner.className = 'card-inner';
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
+    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempsPlayers)) || [];
     
-    const positionMarker = document.createElement('div');
-    positionMarker.className = 'position-marker';
-    positionMarker.textContent = 'BANC';
-    
-    emptyCard.appendChild(cardInner);
-    emptyCard.appendChild(positionMarker);
-    
-    return emptyCard;
+    const player = [...terrainPlayers, ...benchPlayers, ...tempStoragePlayers]
+        .find(p => p.name === playerName);
+        
+    if (player) {
+        playerForEdit = {
+            ...player,
+            originalPosition: player.position
+        };
+
+        const submitButton = playerForm.querySelector('button[type="submit"]');
+        submitButton.textContent = 'Modifier Joueur';
+
+        fillFormWithPlayerData(player);
+    }
 }
+
+
+// remplit formulaire avec joueur existant
+function fillFormWithPlayerData(player) {
+    document.getElementById('name').value = player.name;
+    document.getElementById('photo').value = player.photo;
+    document.getElementById('nationality').value = Object.keys(flagcdn)
+        .find(key => flagcdn[key] === player.flag);
+    document.getElementById('club').value = Object.keys(clubLogos)
+        .find(key => clubLogos[key] === player.logo);
+    document.getElementById('rating').value = player.rating;
+    document.getElementById('position').value = player.position;
+    
+    toggleStats();
+    
+    if (player.position === 'GK') {
+        fillGKStats(player);
+    } else {
+        fillPlayerStats(player);
+    }
+}
+
+// remplit stats de gardien
+function fillGKStats(player) {
+    document.querySelector('#gkStats input[placeholder="Diving"]').value = player.diving;
+    document.querySelector('#gkStats input[placeholder="Handling"]').value = player.handling;
+    document.querySelector('#gkStats input[placeholder="Kicking"]').value = player.kicking;
+    document.querySelector('#gkStats input[placeholder="Reflexes"]').value = player.reflexes;
+    document.querySelector('#gkStats input[placeholder="Speed"]').value = player.speed;
+    document.querySelector('#gkStats input[placeholder="Positioning"]').value = player.positioning;
+}
+
+// remplit stats de joueur
+function fillPlayerStats(player) {
+    document.querySelector('#normalStats input[placeholder="Pace"]').value = player.pace;
+    document.querySelector('#normalStats input[placeholder="Shooting"]').value = player.shooting;
+    document.querySelector('#normalStats input[placeholder="Passing"]').value = player.passing;
+    document.querySelector('#normalStats input[placeholder="Dribbling"]').value = player.dribbling;
+    document.querySelector('#normalStats input[placeholder="Defending"]').value = player.defending;
+    document.querySelector('#normalStats input[placeholder="Physical"]').value = player.physical;
+}
+
+
+
+// modifie joueur deja existant
+function handlePlayerEdit(newPlayer) {
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
+    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempsPlayers)) || [];
+
+    const wasOnField = terrainPlayers.find(p => p.name === playerForEdit.name);
+    const wasOnBench = benchPlayers.find(p => p.name === playerForEdit.name);
+    const wasInTemp = tempStoragePlayers.find(p => p.name === playerForEdit.name);
+    
+
+    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerForEdit.name);
+    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerForEdit.name);
+    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerForEdit.name);
+    
+
+    if (wasOnField) {
+        newTerrainPlayers.push({
+            ...newPlayer,
+            top: wasOnField.top,
+            left: wasOnField.left
+        });
+    } else if (wasOnBench) {
+        newBenchPlayers.push(newPlayer);
+    } else if (wasInTemp) {
+        newTempPlayers.push(newPlayer);
+    }
+
+
+    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
+    localStorage.setItem(tempsPlayers, JSON.stringify(newTempPlayers));
+
+    tempPlayers = newTempPlayers;
+
+    updateField();
+    teamChemistry();
+    updatTemps();
+
+    const tempStorage = document.querySelector('.temp-storage');
+    if (wasInTemp) {
+        showAllPlayers();
+        tempStorage.style.display = 'block';
+    } else {
+        tempStorage.style.display = 'none';
+    }
+
+    clearAllValidation();
+    playerForm.reset();
+    toggleStats();
+    playerForEdit = null;
+
+    const submitButton = playerForm.querySelector('button[type="submit"]');
+    submitButton.textContent = 'Ajouter Joueur';
+}
+
 
 // met les joueurs dans terrain
 function updateField() {
@@ -483,7 +511,6 @@ function updateField() {
     
     const placedPlayers = new Set(); 
     
-  
     formations[formation].positions.forEach(position => {
         const existingPlayer = terrainPlayers.find(p => 
             p.position === position.position && 
@@ -546,8 +573,6 @@ function updateField() {
         }
     });
     
-
-
     // mettre a jour le banc
     const banc = document.querySelector('.banc');
     banc.innerHTML = '';
@@ -618,25 +643,6 @@ function positionTerrain() {
         });
     });
 
-    const playerCards = document.querySelectorAll('.field .player-card');
-    playerCards.forEach(card => {
-        card.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const playerName = card.dataset.playerName;
-            const player = players.find(p => p.name === playerName);
-            gererClickPlayer(player);
-        });
-    });
-
-    const benchCards = document.querySelectorAll('.banc .player-card');
-    benchCards.forEach(card => {
-        card.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const playerName = card.dataset.playerName;
-            const player = tempPlayers.find(p => p.name === playerName);
-            gererClickPlayer(player);
-        });
-    });
 }
 
 // actualise liste joueurs disponibles
@@ -765,6 +771,7 @@ function showMatchingPlayers(position) {
 }
 
 // echange position deux joueurs
+
 function switchPlayers() {
     let selectedPlayer = null;
     const allPlayers = document.querySelectorAll('.field .player-card, .banc .player-card');
@@ -789,8 +796,8 @@ function switchPlayers() {
                 
                 const player1 = player1IsField ? terrainPlayers.find(p => p.name === player1Name) : benchPlayers.find(p => p.name === player1Name);
                 const player2 = player2Name ? (player2IsField ? terrainPlayers.find(p => p.name === player2Name) : benchPlayers.find(p => p.name === player2Name)) : null;
-                
-                if (player1 && player2 && player1.position === player2.position) {
+
+                if (player1 && player2) {
                     if (player1IsField && player2IsField) {
                         const tempTop = player1.top;
                         const tempLeft = player1.left;
@@ -842,29 +849,6 @@ function switchPlayers() {
     });
 }
 
-// supprime joueur du jeu
-function removePlayerCard(event, playerName) {
-    event.stopPropagation();
-    
-    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
-    const tempStoragePlayers = JSON.parse(localStorage.getItem(tempsPlayers)) || [];
-    
-    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== playerName);
-    const newBenchPlayers = benchPlayers.filter(p => p.name !== playerName);
-    const newTempPlayers = tempStoragePlayers.filter(p => p.name !== playerName);
-    
-    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
-    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
-    localStorage.setItem(tempsPlayers, JSON.stringify(newTempPlayers));
-    
-    updateField();
-    teamChemistry();
-    updatTemps();
-}
-
-
-
 // place joueur nouvelle position
 function movePlayerToPosition(player, targetPosition) {
     tempPlayers = tempPlayers.filter(p => p.name !== player.name);
@@ -909,6 +893,32 @@ function movePlayerToPosition(player, targetPosition) {
     teamChemistry();
 }
 
+
+// fonction pour gerer le deplacement vers une position vide
+function movePlayerToEmptyPosition(player, targetPosition) {
+    const isFieldPosition = targetPosition.closest('.field');
+    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
+    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
+
+    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== player.name);
+    const newBenchPlayers = benchPlayers.filter(p => p.name !== player.name);
+    
+    if (isFieldPosition) {
+        newTerrainPlayers.push({
+            ...player,
+            top: targetPosition.style.top,
+            left: targetPosition.style.left
+        });
+    } else {
+        newBenchPlayers.push(player);
+    }
+    
+    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
+    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
+    
+    updateField();
+    teamChemistry();
+}
 
 // calcule la chimie individuelle
 function playerChemistry(player, allPlayers, formation) {
@@ -1002,6 +1012,9 @@ function getNationality(flagUrl) {
 document.addEventListener('DOMContentLoaded', () => {
     players = JSON.parse(localStorage.getItem('players')) || [];
     tempPlayers = JSON.parse(localStorage.getItem(tempsPlayers)) || [];
+
+    const savedFormation = localStorage.getItem(FORMATION_KEY) || '442';
+    document.getElementById('formation').value = savedFormation;
     
     updateField();
     teamChemistry();
@@ -1012,6 +1025,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.getElementById('formation').addEventListener('change', function() {
+    localStorage.setItem(FORMATION_KEY, this.value);
     updateField();
     teamChemistry();
 });
@@ -1054,31 +1068,8 @@ playerForm.addEventListener('submit', function(e) {
     submitButton.textContent = 'Ajouter Joueur';
 });
 
-// fonction pour gerer le deplacement vers une position vide
-function movePlayerToEmptyPosition(player, targetPosition) {
-    const isFieldPosition = targetPosition.closest('.field');
-    const terrainPlayers = JSON.parse(localStorage.getItem(terrain_players)) || [];
-    const benchPlayers = JSON.parse(localStorage.getItem(bench_players)) || [];
 
-    const newTerrainPlayers = terrainPlayers.filter(p => p.name !== player.name);
-    const newBenchPlayers = benchPlayers.filter(p => p.name !== player.name);
-    
-    if (isFieldPosition) {
-        newTerrainPlayers.push({
-            ...player,
-            top: targetPosition.style.top,
-            left: targetPosition.style.left
-        });
-    } else {
-        newBenchPlayers.push(player);
-    }
-    
-    localStorage.setItem(terrain_players, JSON.stringify(newTerrainPlayers));
-    localStorage.setItem(bench_players, JSON.stringify(newBenchPlayers));
-    
-    updateField();
-    teamChemistry();
-}
+
 
 
 
