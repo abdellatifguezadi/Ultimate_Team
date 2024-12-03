@@ -510,7 +510,7 @@ function updateField() {
     let newTerrainPlayers = [];
     
     const placedPlayers = new Set(); 
-    
+
     formations[formation].positions.forEach(position => {
         const existingPlayer = terrainPlayers.find(p => 
             p.position === position.position && 
@@ -1074,3 +1074,8 @@ playerForm.addEventListener('submit', function(e) {
 
 
 
+function recupPlayers(){
+   const arr = document.querySelectorAll('.player_card').forEach(p => {
+        console.log(arr);  
+    })
+}
